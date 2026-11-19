@@ -1,0 +1,21 @@
+rules:
+  - id: python-no-eval
+    patterns:
+      - pattern: eval(...)
+    message: "Avoid using eval() as it can execute arbitrary Python code."
+    languages: [python]
+    severity: ERROR
+
+  - id: python-no-exec
+    patterns:
+      - pattern: exec(...)
+    message: "Avoid using exec() as it can execute arbitrary Python code."
+    languages: [python]
+    severity: ERROR
+
+  - id: python-no-shell-true
+    patterns:
+      - pattern: subprocess.$METHOD(..., shell=True, ...)
+    message: "Avoid subprocess calls with shell=True due to command injection risks."
+    languages: [python]
+    severity: ERROR

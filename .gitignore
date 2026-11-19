@@ -19,6 +19,8 @@ dist/
 .pytest_cache/
 .hypothesis/
 .coverage
+coverage.json
+coverage.*
 htmlcov/
 .mutmut-cache/
 mutants/
