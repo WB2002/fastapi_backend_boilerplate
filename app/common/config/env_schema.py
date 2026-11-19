@@ -1,9 +1,13 @@
-from dataclasses import dataclass
 from typing import Final, Literal
 
+from pydantic import BaseModel, ConfigDict
 
-@dataclass(frozen=True, slots=True)
-class EnvField:
+
+class EnvField(BaseModel):
+    """Declarative environment variable field metadata."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
     required: bool
 
 

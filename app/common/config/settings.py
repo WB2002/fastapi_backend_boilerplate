@@ -1,8 +1,11 @@
 import math
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
+
+from pydantic import PrivateAttr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.common.config.parse_cache_module_options import (
     CacheModuleOptions,
@@ -56,11 +59,27 @@ def normalize_pem(value: str) -> str:
     return value.replace("\\n", "\n")
 
 
-@dataclass(frozen=True, slots=True)
-class Settings:
+class Settings(BaseSettings):
     """Validated application settings backed by the 103-var ENV_SCHEMA."""
 
-    _env: dict[str, str]
+    model_config = SettingsConfigDict(
+        extra="allow",
+        case_sensitive=True,
+        arbitrary_types_allowed=True,
+    )
+
+    _env: dict[str, str] = PrivateAttr(default_factory=dict)
+
+    def __init__(
+        self,
+        _env: dict[str, str] | None = None,
+        **values: Any,
+    ) -> None:
+        super().__init__(**values)
+        if _env is not None:
+            self._env = _env
+        elif not self._env:
+            self._env = validate_env(os.environ)
 
     @classmethod
     def from_env(cls, raw_env: Mapping[str, str | None] | None = None) -> "Settings":
