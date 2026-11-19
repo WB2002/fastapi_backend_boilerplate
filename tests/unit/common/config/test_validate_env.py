@@ -32,25 +32,6 @@ def test_env_schema_has_exact_103_keys_in_order() -> None:
     assert sum(1 for field in ENV_SCHEMA.values() if field.required) == 10
     assert sum(1 for field in ENV_SCHEMA.values() if not field.required) == 93
 
-    ref_path = REPO_ROOT / ".reference_nestjs/src/common/config/env.schema.ts"
-    if not ref_path.exists():
-        return
-
-    ref_text = ref_path.read_text(encoding="utf-8")
-    body_match = re.search(
-        r"export const envSchema = \{(.*?)\} as const", ref_text, re.S
-    )
-    assert body_match is not None
-    entries = re.findall(
-        r"^\s*([A-Z0-9_]+):\s*\{\s*required:\s*(true|false)\s*\},",
-        body_match.group(1),
-        re.M,
-    )
-    assert len(entries) == 103
-    assert list(ENV_SCHEMA.keys()) == [k for k, _ in entries]
-    for key, req_str in entries:
-        assert ENV_SCHEMA[key].required is (req_str == "true")
-
 
 def test_env_schema_exact_required_keys() -> None:
     assert REQUIRED_ENV_KEYS == EXPECTED_REQUIRED_KEYS

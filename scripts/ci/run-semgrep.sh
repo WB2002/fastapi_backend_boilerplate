@@ -15,7 +15,6 @@ fi
 uv run semgrep scan \
   --config "$CONFIG" \
   --error \
-  --exclude '.reference_nestjs' \
   --exclude 'tests' \
   app/
 

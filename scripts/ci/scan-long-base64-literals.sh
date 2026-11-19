@@ -19,8 +19,8 @@ ALLOWED_SUBSTRINGS: set[str] = set()
 found_violations: list[tuple[str, int, str]] = []
 
 for root, dirs, files in os.walk("app"):
-    # Never scan .reference_nestjs or cache dirs
-    dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__" and d != ".reference_nestjs"]
+    # Never scan hidden or cache dirs
+    dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
     for file in files:
         if not file.endswith(".py"):
             continue

@@ -19,3 +19,17 @@ rules:
     message: "Avoid subprocess calls with shell=True due to command injection risks."
     languages: [python]
     severity: ERROR
+
+  - id: python-banned-variable-names
+    patterns:
+      - pattern-either:
+          - pattern: $VAR = $EXPR
+          - pattern: "def $FUNC(..., $VAR, ...): ..."
+          - pattern: "async def $FUNC(..., $VAR, ...): ..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: ^(temp|tmp|foo|bar|baz|dummy)$
+    message: "Generic or AI-generated variable name '$VAR' rejected. Use domain-specific descriptive names."
+    languages: [python]
+    severity: ERROR
+

@@ -1,5 +1,3 @@
-exclude: '^\.reference_nestjs/'
-
 repos:
   - repo: local
     hooks:
@@ -17,6 +15,12 @@ repos:
         name: mypy strict
         entry: uv run mypy --strict app tests
         language: system
+        pass_filenames: false
+      - id: semgrep-guardrails
+        name: semgrep guardrails (banned variable names & security)
+        entry: ./scripts/ci/run-semgrep.sh
+        language: system
+        types: [python]
         pass_filenames: false
       - id: gitleaks-pre-commit
         name: gitleaks pre-commit

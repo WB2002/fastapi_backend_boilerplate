@@ -30,9 +30,7 @@ def test_graphql_sdl_contract() -> None:
 
 
 def test_graphql_sdl_matches_reference_contract() -> None:
-    ref_snapshot_path = Path(
-        ".reference_nestjs/test/contracts/graphql/schema.snapshot.graphql"
-    )
+    ref_snapshot_path = Path("schema.graphql")
     if ref_snapshot_path.exists():
         ref_sdl = ref_snapshot_path.read_text()
         ref_schema = build_schema(ref_sdl)

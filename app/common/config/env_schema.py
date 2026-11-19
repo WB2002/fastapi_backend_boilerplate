@@ -138,8 +138,7 @@ EnvKey = Literal[
     "CONFORMANCE_HARNESS_ENABLED",
 ]
 
-# Declarative 103-key env schema matching:
-# .reference_nestjs/src/common/config/env.schema.ts
+# Declarative 103-key environment schema
 ENV_SCHEMA: Final[dict[str, EnvField]] = {
     # Auth (hard-required)
     "JWT_PRIVATE_KEY": EnvField(required=True),

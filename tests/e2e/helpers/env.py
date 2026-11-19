@@ -31,7 +31,7 @@ ENV_REQUIRED_KEYS: tuple[str, ...] = (
     "HCAPTCHA_SECRET",
 )
 
-# Exact declaration order from .reference_nestjs/src/common/config/env.schema.ts
+# Exact declaration order of environment variables
 ENV_103_KEYS: tuple[str, ...] = (
     "JWT_PRIVATE_KEY",
     "JWT_PUBLIC_KEY",

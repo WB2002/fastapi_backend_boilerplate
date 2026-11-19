@@ -317,14 +317,11 @@ def resolve_project_root() -> Path:
 
 
 def resolve_migrations_dir(project_root: Path | None = None) -> Path:
-    """Locate Postgres SQL migrations in workspace or ``.reference_nestjs``."""
+    """Locate Postgres SQL migrations in workspace."""
     root = project_root or resolve_project_root()
     primary = root / "migrations" / "postgres"
     if primary.is_dir():
         return primary
-    fallback = root / ".reference_nestjs" / "migrations" / "postgres"
-    if fallback.is_dir():
-        return fallback
     msg = f"Postgres migrations directory not found under {root}"
     raise FileNotFoundError(msg)
 
