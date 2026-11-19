@@ -75,7 +75,9 @@ FROM runtime-base AS api
 COPY --from=builder-base /opt/venv /opt/venv
 COPY --chown=app:app app/ ./app/
 COPY --chown=app:app migrations/ ./migrations/
+COPY --chown=app:app alembic.ini ./
 COPY --chown=app:app schema.graphql ./
+COPY --chown=app:app alembic.ini ./
 
 # Invariant check: enforce zero markdown files in the final runtime container
 RUN find /app -name "*.md" | (! grep .)
@@ -98,6 +100,7 @@ FROM runtime-base AS worker
 COPY --from=builder-base /opt/venv /opt/venv
 COPY --chown=app:app app/ ./app/
 COPY --chown=app:app migrations/ ./migrations/
+COPY --chown=app:app alembic.ini ./
 
 # Invariant check: enforce zero markdown files in the final runtime container
 RUN find /app -name "*.md" | (! grep .)

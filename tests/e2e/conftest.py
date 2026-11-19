@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast
+
+import httpx
+import pytest
+import pytest_asyncio
 
 from tests.e2e.helpers.containers import (
     BackingServices,
@@ -16,9 +20,6 @@ from tests.e2e.helpers.geoip import get_geoip_mmdb_path
 from tests.e2e.helpers.mocks import MockClamAvServer, MockHttpServer
 from tests.e2e.helpers.server import LiveAppServer
 
-if TYPE_CHECKING:
-    import httpx
-
 _F = TypeVar("_F", bound=Callable[..., Any])
 
 
@@ -26,10 +27,6 @@ def _sync_fixture(
     *,
     scope: Literal["session", "function"] = "function",
 ) -> Callable[[_F], _F]:
-    try:
-        import pytest
-    except ModuleNotFoundError:  # pragma: no cover
-        return lambda fn: fn
     return cast("Callable[[_F], _F]", pytest.fixture(scope=scope))
 
 
@@ -37,10 +34,6 @@ def _async_fixture(
     *,
     scope: Literal["session", "function"] = "function",
 ) -> Callable[[_F], _F]:
-    try:
-        import pytest_asyncio
-    except ModuleNotFoundError:  # pragma: no cover
-        return _sync_fixture(scope=scope)
     return cast("Callable[[_F], _F]", pytest_asyncio.fixture(scope=scope))
 
 
@@ -158,9 +151,7 @@ async def http_client(
     live_server: LiveAppServer,
 ) -> AsyncIterator[httpx.AsyncClient]:
     """Function-scoped ``httpx.AsyncClient`` bound to ``live_server``."""
-    import httpx as httpx_mod
-
-    async with httpx_mod.AsyncClient(
+    async with httpx.AsyncClient(
         base_url=live_server.base_url,
         timeout=15.0,
         trust_env=False,

@@ -7,7 +7,7 @@
     "duplication": 0,
     "max_complexity": 15,
     "dead_code": 0,
-    "dependency_count": 26,
+    "dependency_count": 27,
     "mutation_score": null,
     "bundle_size": null
   },

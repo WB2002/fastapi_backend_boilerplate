@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from unittest.mock import AsyncMock
 
 import pytest
@@ -16,6 +17,7 @@ from app.core.cache import (
     apply_ttl_jitter,
     release_redis_loader_lock,
 )
+from app.core.cache.types import CacheEntry
 
 
 def test_apply_ttl_jitter() -> None:
@@ -42,10 +44,6 @@ def test_apply_ttl_jitter() -> None:
 async def test_memory_cache_backend() -> None:
     backend = MemoryCacheBackend()
     assert backend.size() == 0
-
-    import time
-
-    from app.core.cache.types import CacheEntry
 
     future_ms = int(time.time() * 1000) + 100_000
     entry = CacheEntry(

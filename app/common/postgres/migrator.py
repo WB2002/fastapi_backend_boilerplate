@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Any
 
 import asyncpg
+from alembic import command
+from alembic.config import Config
 
 from app.common.postgres.postgres_pool import PostgresPool, PostgresPoolOptions
 
@@ -177,10 +179,31 @@ async def run_postgres_migrations_down(
     return await migrator.migrate_down()
 
 
+def run_alembic_upgrade_head(config_path: str | Path | None = None) -> None:
+    """Programmatically run Alembic migrations up to head."""
+    root = Path(__file__).resolve().parents[3]
+    ini_path = Path(config_path) if config_path else root / "alembic.ini"
+    alembic_cfg = Config(str(ini_path))
+    command.upgrade(alembic_cfg, "head")
+
+
+def run_alembic_downgrade(
+    revision: str = "base",
+    config_path: str | Path | None = None,
+) -> None:
+    """Programmatically run Alembic migrations down to target revision."""
+    root = Path(__file__).resolve().parents[3]
+    ini_path = Path(config_path) if config_path else root / "alembic.ini"
+    alembic_cfg = Config(str(ini_path))
+    command.downgrade(alembic_cfg, revision)
+
+
 __all__ = [
     "PostgresMigrator",
     "execute_migration_sql",
     "resolve_default_migrations_dir",
+    "run_alembic_downgrade",
+    "run_alembic_upgrade_head",
     "run_postgres_migrations_down",
     "run_postgres_migrations_up",
     "split_sql_statements",

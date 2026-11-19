@@ -4,6 +4,8 @@ import ipaddress
 import logging
 from typing import Any
 
+import geoip2.database
+
 from app.common.country_access.types import (
     GeoLocationService,
     normalize_country_code,
@@ -28,8 +30,6 @@ class MaxMindGeoLocationService(GeoLocationService):
         if self._reader is not None or not self._database_path:
             return
         try:
-            import geoip2.database
-
             self._reader = geoip2.database.Reader(self._database_path)
             logger.info("Loaded GeoIP database from %s", self._database_path)
         except Exception as exc:

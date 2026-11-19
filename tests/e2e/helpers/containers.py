@@ -10,6 +10,14 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+import asyncpg
+import pymongo
+import redis.asyncio as aioredis
+from motor.motor_asyncio import AsyncIOMotorClient
+from testcontainers.mongodb import MongoDbContainer
+from testcontainers.postgres import PostgresContainer
+from testcontainers.redis import RedisContainer
+
 
 @dataclass(frozen=True, slots=True)
 class PostgresConfig:
@@ -96,10 +104,6 @@ def _redis_from_env() -> tuple[str, int] | None:
 
 
 def _wait_for_mongo_primary(uri: str, timeout_sec: float = 180.0) -> None:
-    try:
-        import pymongo
-    except ImportError:
-        return
     deadline = time.monotonic() + timeout_sec
     last_err: Exception | None = None
     while time.monotonic() < deadline:
@@ -121,14 +125,6 @@ def _wait_for_mongo_primary(uri: str, timeout_sec: float = 180.0) -> None:
 
 def _start_postgres_container(started: list[Any]) -> PostgresConfig:
     try:
-        from testcontainers.postgres import PostgresContainer
-    except ImportError as exc:
-        msg = (
-            "Set E2E_POSTGRES_* / E2E_POSTGRES_DSN or install 'testcontainers' "
-            "with Docker running"
-        )
-        raise RuntimeError(msg) from exc
-    try:
         container = PostgresContainer("postgres:17-alpine")
         container.start()
         started.append(container)
@@ -149,11 +145,6 @@ def _start_postgres_container(started: list[Any]) -> PostgresConfig:
 
 def _start_mongo_container(started: list[Any]) -> str:
     try:
-        from testcontainers.mongodb import MongoDbContainer
-    except ImportError as exc:
-        msg = "Set E2E_MONGO_URI or install 'testcontainers' with Docker running"
-        raise RuntimeError(msg) from exc
-    try:
         container = MongoDbContainer("mongo:8.0")
         container.start()
         started.append(container)
@@ -170,14 +161,6 @@ def _start_mongo_container(started: list[Any]) -> str:
 
 
 def _start_redis_container(started: list[Any]) -> tuple[str, int]:
-    try:
-        from testcontainers.redis import RedisContainer
-    except ImportError as exc:
-        msg = (
-            "Set E2E_REDIS_HOST/E2E_REDIS_PORT or install 'testcontainers' "
-            "with Docker running"
-        )
-        raise RuntimeError(msg) from exc
     try:
         container = RedisContainer("redis:7-alpine")
         container.start()
@@ -440,8 +423,6 @@ async def apply_postgres_migrations(
     reset: bool = False,
 ) -> list[str]:
     """Apply Postgres ``migrations/postgres/*.sql`` idempotently."""
-    import asyncpg
-
     cfg = _as_postgres_config(postgres)
     mdir = migrations_dir or resolve_migrations_dir()
     down_files = sorted(mdir.glob("*.down.sql"), reverse=True)
@@ -473,8 +454,6 @@ def apply_postgres_migrations_sync(
 
 async def flush_postgres(target: PostgresConfig | BackingServices) -> None:
     """Truncate known E2E Postgres tables if present."""
-    import asyncpg
-
     cfg = _as_postgres_config(target)
     conn = await asyncpg.connect(cfg.dsn)
     try:
@@ -494,8 +473,6 @@ async def flush_postgres(target: PostgresConfig | BackingServices) -> None:
 
 async def flush_mongo(mongo_uri: str, db_name: str | None = None) -> None:
     """Drop all non-system collections in the target MongoDB database."""
-    from motor.motor_asyncio import AsyncIOMotorClient
-
     client: Any = AsyncIOMotorClient(mongo_uri, serverSelectionTimeoutMS=3000)
     try:
         parsed_db = urlparse(mongo_uri).path.lstrip("/")
@@ -511,8 +488,6 @@ async def flush_mongo(mongo_uri: str, db_name: str | None = None) -> None:
 
 async def flush_redis(host: str, port: int) -> None:
     """Flush the active Redis database via ``FLUSHDB``."""
-    import redis.asyncio as aioredis
-
     client = aioredis.Redis(host=host, port=port)
     try:
         await client.flushdb()

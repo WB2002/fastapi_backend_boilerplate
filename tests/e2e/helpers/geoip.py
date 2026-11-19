@@ -10,6 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import geoip2.database
+import geoip2.errors
+
 _MMDB_MARKER = b"\xab\xcd\xefMaxMind.com"
 
 DEFAULT_GEOIP_CIDRS: tuple[tuple[str, str, str], ...] = (
@@ -449,12 +452,6 @@ def verify_mmdb_lookups(
                 f"expected {expected_iso!r}, got {actual_iso!r}"
             )
             raise AssertionError(msg)
-
-    try:
-        import geoip2.database
-        import geoip2.errors
-    except ImportError:
-        return
 
     with geoip2.database.Reader(str(path)) as reader:
         for ip_str, expected_iso in targets.items():

@@ -92,8 +92,6 @@ def test_circuit_breaker_transitions() -> None:
         cb.assert_closed()
 
     # Wait for reset timeout
-    import time
-
     time.sleep(0.06)
 
     # Half open transition

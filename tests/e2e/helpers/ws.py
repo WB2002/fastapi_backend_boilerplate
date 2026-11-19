@@ -5,11 +5,10 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-if TYPE_CHECKING:
-    import socketio
+import socketio
 
 DEFAULT_WS_PATH = "/socket.io"
 REALTIME_NAMESPACE = "/realtime"
@@ -129,9 +128,7 @@ async def connect_realtime_client(
     wait_timeout: float = 5.0,
 ) -> RealtimeClient:
     """Connect an async Socket.IO client to ``/realtime`` with explicit auth."""
-    import socketio as sio_mod
-
-    sio = sio_mod.AsyncClient(logger=False, engineio_logger=False)
+    sio = socketio.AsyncClient(logger=False, engineio_logger=False)
     client = RealtimeClient(sio=sio, namespace=namespace)
 
     async def _record(event_name: str, data: Any) -> None:

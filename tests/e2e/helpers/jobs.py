@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import asyncpg
+
 from tests.e2e.helpers.containers import resolve_project_root
 from tests.e2e.helpers.server import resolve_python_executable
 
@@ -92,8 +94,6 @@ _SELECT_COLUMNS = (
 
 async def fetch_job(target: str | Any, job_id: str) -> BackgroundJobRow | None:
     """Fetch a single row from ``background_jobs`` by UUID."""
-    import asyncpg
-
     conn = await asyncpg.connect(_resolve_dsn(target))
     try:
         row = await conn.fetchrow(
@@ -110,8 +110,6 @@ async def fetch_jobs_by_dedupe_key(
     dedupe_key: str,
 ) -> list[BackgroundJobRow]:
     """Fetch all ``background_jobs`` rows matching ``dedupe_key``."""
-    import asyncpg
-
     conn = await asyncpg.connect(_resolve_dsn(target))
     try:
         rows = await conn.fetch(
@@ -167,8 +165,6 @@ async def insert_job_row(
     locked_by: str | None = None,
 ) -> str:
     """Insert a synthetic row into ``background_jobs`` and return its UUID."""
-    import asyncpg
-
     payload_json = json.dumps(dict(payload) if payload is not None else {})
     conn = await asyncpg.connect(_resolve_dsn(target))
     try:
@@ -208,8 +204,6 @@ async def expire_job_lease(
     locked_by: str = "crashed-worker:0",
 ) -> None:
     """Force a job into an expired ``processing`` lease state for reclaim testing."""
-    import asyncpg
-
     conn = await asyncpg.connect(_resolve_dsn(target))
     try:
         await conn.execute(
@@ -235,8 +229,6 @@ async def backdate_pending_job(
     seconds_ago: float = 60.0,
 ) -> None:
     """Backdate ``run_at`` on a ``pending`` job to simulate an orphaned queued row."""
-    import asyncpg
-
     conn = await asyncpg.connect(_resolve_dsn(target))
     try:
         await conn.execute(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -88,8 +89,6 @@ class HttpResponse:
         return self.content.decode("utf-8", errors="replace")
 
     def json(self) -> Any:
-        import json
-
         return json.loads(self.content.decode("utf-8"))
 
 

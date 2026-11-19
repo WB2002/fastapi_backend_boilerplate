@@ -7,6 +7,7 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Integrated Alembic for asynchronous PostgreSQL schema migrations with native `alembic_version` state tracking, `alembic.ini`, asyncpg `env.py`, initial revisions (`0001_create_country_access`, `0002_create_background_jobs`), and programmatic migration helpers in `app/common/postgres/migrator.py`.
 - Multi-stage production `Dockerfile` with slim Python base, Astral `uv` dependency caching, `tini` PID 1 process supervision, non-root user `app` (uid 10001), automated standard-library healthcheck, and zero `.md` file runtime image invariant check.
 - Production `.dockerignore` strictly excluding markdown files, documentation, tests, virtual environments, and caches.
 - Monorepo change detection composite action (`.github/actions/detect-changes`) matching `medoly-backend` git-diff scoping, preventing unnecessary CI and container builds on documentation-only changes.

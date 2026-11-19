@@ -5,13 +5,14 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
-import shutil
-import subprocess
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 DEFAULT_COOKIE_SECRET = "e2e-test-cookie-secret-32-bytes!!"
 DEFAULT_HCAPTCHA_SITE_KEY = "10000000-ffff-ffff-ffff-000000000001"
@@ -160,58 +161,24 @@ class RsaKeyPair:
 
 def generate_rsa_keypair(key_size: int = 2048) -> RsaKeyPair:
     """Generate a 2048-bit (or ``key_size``-bit) RSA PKCS#8/SPKI PEM keypair."""
-    try:
-        from cryptography.hazmat.primitives import serialization
-        from cryptography.hazmat.primitives.asymmetric import rsa
-
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=key_size,
-        )
-        priv_pem = private_key.private_bytes(
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=key_size,
+    )
+    priv_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("utf-8")
+    pub_pem = (
+        private_key.public_key()
+        .public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        ).decode("utf-8")
-        pub_pem = (
-            private_key.public_key()
-            .public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo,
-            )
-            .decode("utf-8")
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
-        return RsaKeyPair(private_key_pem=priv_pem, public_key_pem=pub_pem)
-    except ImportError:
-        pass
-
-    openssl_bin = shutil.which("openssl")
-    if openssl_bin is None:
-        msg = "Neither 'cryptography' nor 'openssl' CLI is available for RSA keygen"
-        raise RuntimeError(msg)
-
-    priv_proc = subprocess.run(  # noqa: S603
-        [
-            openssl_bin,
-            "genpkey",
-            "-algorithm",
-            "RSA",
-            "-pkeyopt",
-            f"rsa_keygen_bits:{key_size}",
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
+        .decode("utf-8")
     )
-    priv_pem = priv_proc.stdout
-    pub_proc = subprocess.run(  # noqa: S603
-        [openssl_bin, "pkey", "-pubout"],
-        input=priv_pem,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return RsaKeyPair(private_key_pem=priv_pem, public_key_pem=pub_proc.stdout)
+    return RsaKeyPair(private_key_pem=priv_pem, public_key_pem=pub_pem)
 
 
 def sign_cookie(value: str, secret: str) -> str:
