@@ -1,0 +1,113 @@
+name: Detect changed services
+description: Git-diff change detection for the fastapi-backend-boilerplate monorepo.
+
+outputs:
+  services:
+    description: JSON array of changed service names (api, worker).
+    value: ${{ steps.detect.outputs.services }}
+  test_matrix:
+    description: JSON array of {name,dir} objects for changed services.
+    value: ${{ steps.detect.outputs.test_matrix }}
+  bake_targets:
+    description: Comma-separated docker build/bake targets to build.
+    value: ${{ steps.detect.outputs.bake_targets }}
+  any:
+    description: "'true' when at least one service must build/test."
+    value: ${{ steps.detect.outputs.any }}
+  api:
+    description: "'true' when the api service was modified."
+    value: ${{ steps.detect.outputs.api }}
+  worker:
+    description: "'true' when the worker service was modified."
+    value: ${{ steps.detect.outputs.worker }}
+
+runs:
+  using: composite
+  steps:
+    - id: detect
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        BASE_REF: ${{ github.base_ref }}
+        BEFORE: ${{ github.event.before }}
+        SHA: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+
+        nul="0000000000000000000000000000000000000000"
+        mode="diff"
+        range=""
+
+        if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          mode="all"
+        elif [ "$EVENT_NAME" = "pull_request" ]; then
+          git fetch --no-tags origin "$BASE_REF"
+          range="origin/${BASE_REF}...HEAD"
+        else
+          if [ -z "${BEFORE:-}" ] || [ "$BEFORE" = "$nul" ]; then
+            mode="all"
+          else
+            range="${BEFORE}..${SHA}"
+          fi
+        fi
+
+        api=false; worker=false; shared=false
+
+        if [ "$mode" = "all" ]; then
+          api=true; worker=true
+          echo "Change mode: ALL (dispatch or new branch) -> all targets"
+        else
+          files="$(git diff --name-only $range || true)"
+          echo "Diff range: $range"
+          echo "Changed files:"; printf '%s\n' "$files"
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              app/core/background_jobs/*)
+                worker=true; api=true ;;
+              app/*)
+                api=true ;;
+              migrations/*)
+                api=true; worker=true ;;
+              tests/unit/core/background_jobs/*)
+                worker=true ;;
+              tests/*)
+                api=true; worker=true ;;
+              docs/*|evals/*|intent/*|quality/*|*.md|docker-compose*.yml|.env.example)
+                ;;
+              *)
+                shared=true ;;
+            esac
+          done <<< "$files"
+          if [ "$shared" = true ]; then api=true; worker=true; fi
+        fi
+
+        svc=(); tgt=(); tm=()
+        if [ "$api" = true ]; then
+          svc+=("api"); tgt+=("api")
+          tm+=('{"name":"api","dir":"app"}')
+        fi
+        if [ "$worker" = true ]; then
+          svc+=("worker"); tgt+=("worker")
+          tm+=('{"name":"worker","dir":"app/core/background_jobs"}')
+        fi
+
+        if [ ${#svc[@]} -gt 0 ]; then
+          services_json="$(printf '%s\n' "${svc[@]}" | jq -cnR '[inputs]')"
+          test_matrix="$(printf '%s\n' "${tm[@]}" | jq -cs '.')"
+          any=true
+        else
+          services_json='[]'; test_matrix='[]'; any=false
+        fi
+        IFS=','; bake_targets="${tgt[*]:-}"; unset IFS
+
+        {
+          echo "services=${services_json}"
+          echo "test_matrix=${test_matrix}"
+          echo "bake_targets=${bake_targets}"
+          echo "any=${any}"
+          echo "api=${api}"
+          echo "worker=${worker}"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "Resolved -> services=${services_json} bake_targets=[${bake_targets}] any=${any}"

@@ -7,6 +7,11 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Multi-stage production `Dockerfile` with slim Python base, Astral `uv` dependency caching, `tini` PID 1 process supervision, non-root user `app` (uid 10001), automated standard-library healthcheck, and zero `.md` file runtime image invariant check.
+- Production `.dockerignore` strictly excluding markdown files, documentation, tests, virtual environments, and caches.
+- Monorepo change detection composite action (`.github/actions/detect-changes`) matching `medoly-backend` git-diff scoping, preventing unnecessary CI and container builds on documentation-only changes.
+- Complete Celery background worker runtime (`app/core/background_jobs/celery_app.py`, `dispatcher.py`, `worker.py`) with Redis broker integration, `CeleryQueueDispatcher` adapter, and worker process entrypoint.
+- Updated `docker-compose.yml` with multi-stage build targets for `app` (api) and `worker`.
 - `superpowers` (`/superpowers`) skill: Core software development discipline and workflow framework (Jesse Vincent's `obra/superpowers`) enforcing the 1% mandatory skill invocation rule, Subagent-Driven Development (SDD), multi-task plan execution, TDD red-green loop, systematic debugging, and evidence-first completion gates.
 - Complete metadata tables in root `README.md` indexing all 33 specialized agents and 33 skills with functionality, access permissions, invocation patterns (slash commands vs. model-invoked triggers), and operational boundaries.
 - `bootstrap-stack` (`/bootstrap-stack`) skill: Day-0 walking skeleton scaffolding, build/test/lint wiring, CI workflow population, and architecture policy activation from an accepted `docs/adr/0001-stack.md`.

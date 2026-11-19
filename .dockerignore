@@ -1,0 +1,57 @@
+# Keep the Docker build context tight.
+# Exclude VCS & metadata
+.git/
+.gitignore
+.gitattributes
+.github/
+.cursor/
+.agents/
+
+# Documentation & Markdown files (CRITICAL: zero .md files in runtime image)
+*.md
+**/*.md
+docs/
+intent/
+evals/
+quality/
+
+# Python caches & virtualenvs
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.venv/
+venv/
+ENV/
+
+# Testing & coverage
+tests/
+.pytest_cache/
+.coverage
+coverage.json
+htmlcov/
+.hypothesis/
+
+# Linting & typing
+.mypy_cache/
+.ruff_cache/
+
+# Local env & IDE
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Reference & worktrees
+.reference_nestjs/
+.worktrees/

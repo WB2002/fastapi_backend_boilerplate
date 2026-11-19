@@ -1,10 +1,21 @@
 from __future__ import annotations
 
+from app.core.background_jobs.celery_app import (
+    WorkerRuntimeContext,
+    celery_app,
+    create_celery_app,
+    get_worker_context,
+    resolve_celery_broker_url,
+)
 from app.core.background_jobs.constants import (
     BACKGROUND_JOBS_DEFAULT_QUEUE,
     BACKGROUND_JOBS_LEASE_EXPIRED_MESSAGE,
     BACKGROUND_JOBS_RUN_JOB_NAME,
     DEFAULT_LEASE_DURATION_SEC,
+)
+from app.core.background_jobs.dispatcher import (
+    CeleryJobProxy,
+    CeleryQueueDispatcher,
 )
 from app.core.background_jobs.handlers import JobHandler, JobHandlerRegistry
 from app.core.background_jobs.job_enqueue_service import JobEnqueueService
@@ -29,6 +40,8 @@ __all__ = [
     "BackgroundJobRow",
     "BackgroundJobStatus",
     "BackgroundJobsRunProcessor",
+    "CeleryJobProxy",
+    "CeleryQueueDispatcher",
     "ClaimJobInput",
     "EnqueueJobInput",
     "EnqueueJobResult",
@@ -39,4 +52,9 @@ __all__ = [
     "JobLeaseReclaimService",
     "PostgresJobRepository",
     "ReclaimedLeaseRow",
+    "WorkerRuntimeContext",
+    "celery_app",
+    "create_celery_app",
+    "get_worker_context",
+    "resolve_celery_broker_url",
 ]

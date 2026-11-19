@@ -20,6 +20,7 @@ from app.common.config.parse_http_server_timeouts import (
 from app.common.config.parse_trust_proxy import parse_trust_proxy
 from app.common.config.parsers import (
     assert_websocket_production_origins,
+    parse_background_jobs_config,
     parse_inbound_bulkhead_config,
     parse_inbound_load_level_config,
     parse_non_negative_int,
@@ -58,8 +59,10 @@ from app.conformance import (
     set_conformance_http_client_service,
 )
 from app.core.background_jobs import (
+    CeleryQueueDispatcher,
     JobEnqueueService,
     PostgresJobRepository,
+    create_celery_app,
 )
 from app.core.cache import CacheService, MemoryCacheBackend
 from app.core.compression.compression_middleware import (
@@ -259,7 +262,15 @@ def create_app(
 
     # Background jobs
     job_repo = PostgresJobRepository(postgres_pool)
-    job_enqueue = JobEnqueueService(job_repo)
+    bg_config = parse_background_jobs_config(validated_env)
+    dispatcher = None
+    if bg_config.enabled:
+        celery_inst = create_celery_app(env=validated_env)
+        dispatcher = CeleryQueueDispatcher(
+            celery_app=celery_inst,
+            default_queue=bg_config.default_queue_name,
+        )
+    job_enqueue = JobEnqueueService(job_repo, queue_dispatcher=dispatcher)
     set_job_enqueue_service(job_enqueue)
     app.state.job_enqueue_service = job_enqueue
 
