@@ -1,0 +1,35 @@
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import Final
+
+
+class UserRole(StrEnum):
+    ADMIN = "admin"
+    USER = "user"
+
+
+DEFAULT_AUTH_PASSWORD_HASH_MAX_CONCURRENT: Final[int] = 2
+DEFAULT_AUTH_PASSWORD_HASH_MAX_QUEUE: Final[int] = 32
+DEFAULT_AUTH_PASSWORD_HASH_MAX_WAIT_MS: Final[int] = 2_000
+
+ARGON2_TIME_COST: Final[int] = 3
+ARGON2_MEMORY_COST: Final[int] = 65_536
+ARGON2_PARALLELISM: Final[int] = 4
+
+DEFAULT_ACCESS_TOKEN_TTL: Final[int] = 900
+DEFAULT_SESSION_TTL: Final[int] = 604_800
+REVOKED_JTI_PREFIX: Final[str] = "revoked_jti:"
+
+__all__ = [
+    "ARGON2_MEMORY_COST",
+    "ARGON2_PARALLELISM",
+    "ARGON2_TIME_COST",
+    "DEFAULT_ACCESS_TOKEN_TTL",
+    "DEFAULT_AUTH_PASSWORD_HASH_MAX_CONCURRENT",
+    "DEFAULT_AUTH_PASSWORD_HASH_MAX_QUEUE",
+    "DEFAULT_AUTH_PASSWORD_HASH_MAX_WAIT_MS",
+    "DEFAULT_SESSION_TTL",
+    "REVOKED_JTI_PREFIX",
+    "UserRole",
+]

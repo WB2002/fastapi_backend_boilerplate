@@ -1,0 +1,58 @@
+# Cursor AI-SDLC local guardrail markers
+.cursor/.fix-mode
+.cursor/.guardrails-edit
+
+# Worktrees & read-only reference
+.worktrees/
+.reference_nestjs/
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.egg-info/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+.mutmut-cache/
+mutants/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# MaxMind GeoIP databases (do not commit licensed/binary MMDB files)
+*.mmdb
+
+# Temp & runtime data
+.temp/
+.tmp/
+pids/
+*.pid
+*.seed
+*.pid.lock
+.osv-scan-output.json

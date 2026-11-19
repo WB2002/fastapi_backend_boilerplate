@@ -1,0 +1,117 @@
+[project]
+name = "fastapi-backend-boilerplate"
+version = "0.1.0"
+description = "Enterprise FastAPI backend boilerplate with NestJS parity"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "python-multipart>=0.0.17",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "motor>=3.6.0",
+    "beanie>=1.27.0",
+    "redis>=5.2.0",
+    "pyjwt[crypto]>=2.10.0",
+    "argon2-cffi>=23.1.0",
+    "itsdangerous>=2.2.0",
+    "brotli-asgi>=1.4.0",
+    "nh3>=0.2.19",
+    "httpx>=0.28.0",
+    "celery[redis]>=5.4.0",
+    "python-socketio>=5.11.0",
+    "strawberry-graphql[fastapi]>=0.254.0",
+    "geoip2>=4.8.0",
+    "filetype>=1.2.0",
+    "structlog>=24.4.0",
+    "psutil>=6.1.0",
+    "opentelemetry-sdk>=1.29.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.29.0",
+    "opentelemetry-sdk-extension-aws>=2.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "testcontainers>=4.9.0",
+    "hypothesis>=6.122.0",
+    "mutmut>=3.2.0",
+    "pip-audit>=2.7.0",
+    "semgrep>=1.99.0",
+    "pyyaml>=6.0.2",
+    "types-pyyaml>=6.0.12.20240917",
+    "types-psutil>=6.1.0.20241102",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+extend-exclude = [
+    ".reference_nestjs",
+    ".worktrees",
+    ".venv",
+    "migrations",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "ASYNC", "C90", "RUF"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S105", "S106", "S108"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["app", "tests"]
+exclude = [
+    "^\\.reference_nestjs/",
+    "^\\.worktrees/",
+    "^\\.venv/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "asyncpg.*",
+    "brotli_asgi.*",
+    "filetype.*",
+    "socketio.*",
+    "celery.*",
+    "mutmut.*",
+    "testcontainers.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [
+    ".*",
+    ".reference_nestjs",
+    ".worktrees",
+    ".venv",
+    ".git",
+    "node_modules",
+    "dist",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+
+[tool.mutmut]
+paths_to_mutate = ["app/"]
+tests_dir = ["tests/unit/"]

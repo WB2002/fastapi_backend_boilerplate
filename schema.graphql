@@ -1,0 +1,16 @@
+type Category {
+  id: ID!
+  name: String!
+  description: String
+}
+
+input CategoryFilterInput {
+  name: String!
+  websiteUrl: String
+}
+
+type Query {
+  categories: [Category!]!
+  category(id: ID!): Category
+  searchCategories(filter: CategoryFilterInput!): [Category!]!
+}

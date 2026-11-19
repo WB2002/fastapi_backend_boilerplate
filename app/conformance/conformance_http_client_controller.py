@@ -1,0 +1,42 @@
+from __future__ import annotations
+
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, status
+
+from app.common.decorators import public
+from app.conformance.assert_loopback_target_url import assert_loopback_target_url
+from app.conformance.conformance_http_client_service import (
+    ConformanceHttpClientService,
+)
+from app.conformance.dto import ConformanceHttpClientRequestDto
+
+router = APIRouter(prefix="/conformance/http-client", tags=["Conformance HTTP Client"])
+
+_client_service: ConformanceHttpClientService | None = None
+
+
+def set_conformance_http_client_service(
+    service: ConformanceHttpClientService | None,
+) -> None:
+    global _client_service
+    _client_service = service
+
+
+def get_conformance_http_client_service() -> ConformanceHttpClientService:
+    if _client_service is None:
+        raise RuntimeError("ConformanceHttpClientService not configured")
+    return _client_service
+
+
+@router.post("", status_code=status.HTTP_200_OK)
+@public
+async def execute(
+    request: ConformanceHttpClientRequestDto,
+    service: Annotated[
+        ConformanceHttpClientService,
+        Depends(get_conformance_http_client_service),
+    ],
+) -> dict[str, Any]:
+    assert_loopback_target_url(request.targetUrl)
+    return await service.execute(request)

@@ -1,0 +1,10 @@
+from __future__ import annotations
+
+from typing import Final
+
+DEFAULT_WEBSOCKET_PATH: Final[str] = "/socket.io"
+REALTIME_NAMESPACE: Final[str] = "/realtime"
+DEFAULT_WEBSOCKET_MAX_CONNECTIONS_PER_USER: Final[int] = 5
+DEFAULT_WEBSOCKET_MAX_INBOUND_BUFFER_BYTES: Final[int] = 1_000_000
+DEFAULT_WEBSOCKET_MESSAGES_PER_MINUTE: Final[int] = 120
+DEFAULT_WEBSOCKET_CONNECTION_KEY_TTL_SEC: Final[int] = 86_400

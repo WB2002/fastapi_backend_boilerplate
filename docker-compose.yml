@@ -1,0 +1,90 @@
+# On the same network, refer to a service by its service name (e.g. mongo, app) in connection strings.
+services:
+  app:
+    container_name: app
+    build: .
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      - PORT=${PORT:-3000}
+      - MONGO_URI=mongodb://mongo:27017/nestjs-boilerplate
+      - REDIS_HOST=redis
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - backend-network
+    # Background jobs (optional): BACKGROUND_JOBS_ENABLED=true, BACKGROUND_WORKER_ENABLED=true,
+    # POSTGRES_* pointing at postgres service below.
+
+  # If Mongo exits with code 62 (Wrong mongod version), the volume was created by an older
+  # major version (e.g. 6.x). Either: docker compose down -v && docker compose up -d (fresh 8.0),
+  # or use image: mongo:6 to match the existing data.
+  mongo:
+    container_name: mongo
+    image: mongo:8.0
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - backend-network
+
+  # postgres:
+  #   image: postgres:17
+  #   ports:
+  #     - "${POSTGRES_PORT:-5432}:5432"
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     # Apply migrations once, e.g. mount migrations/postgres and run on init:
+  #     # - ./migrations/postgres/001_create_country_access.sql:/docker-entrypoint-initdb.d/001_create_country_access.sql:ro
+  #   networks:
+  #     - backend-network
+
+  # Optional: mount MaxMind GeoLite2 Country MMDB into the app container
+  # (do not bake the .mmdb into the image or commit it to git):
+  # app:
+  #   volumes:
+  #     - ${GEOIP_DATABASE_PATH}:/data/GeoLite2-Country.mmdb:ro
+
+  redis:
+    image: redis:7
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend-network
+
+  # Optional virus scanner for uploads (enable with UPLOAD_VIRUS_SCAN=true).
+  # Reachable only on backend-network as clamav:3310 (no host port published).
+  # First start can take several minutes while virus definitions download.
+  clamav:
+    image: clamav/clamav:1.4
+    container_name: clamav
+    volumes:
+      - clamav_data:/var/lib/clamav
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 3310 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  # postgres_data:
+  redis_data:
+  clamav_data:
