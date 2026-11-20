@@ -137,12 +137,14 @@ async def test_country_access_service_and_guard() -> None:
 
     guard = CountryAccessGuard(service, geo_mock)
 
-    # 1. Allowed request
+    # 1. Allowed request (trust_proxy=false ignores forged XFF)
     req1 = MagicMock(spec=Request)
     req1.url.path = "/api/v1/resource"
     req1.scope = {}
     req1.headers = {"x-forwarded-for": "1.2.3.4"}
     req1.client.host = "1.2.3.4"
+    req1.app = MagicMock()
+    req1.app.state.trust_proxy = False
     await guard.check_access(req1)
 
     # 2. Bypass path

@@ -8,6 +8,7 @@ from app.common.config import (
     CacheStorage,
     RateLimitStorage,
     Settings,
+    assert_rest_production_origins,
     assert_websocket_production_origins,
     get_settings,
     is_app_metrics_enabled,
@@ -310,6 +311,14 @@ def test_parse_websocket_config_and_prod_origin_guard() -> None:
         {"NODE_ENV": "production", "WEBSOCKET_ENABLED": "false"}
     )
     assert_websocket_production_origins(prod_disabled, "production")
+
+    assert_rest_production_origins("https://a.com, https://b.com", "production")
+    with pytest.raises(
+        ValueError,
+        match=r"^ALLOWED_ORIGINS must list explicit origins when NODE_ENV=production$",
+    ):
+        assert_rest_production_origins("*", "production")
+    assert_rest_production_origins("https://a.com", "development")
 
     prod_no_adapter = parse_websocket_config(
         {"NODE_ENV": "production", "WEBSOCKET_REDIS_ADAPTER": "false"}

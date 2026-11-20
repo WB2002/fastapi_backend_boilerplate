@@ -9,6 +9,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from app.common.country_access.country_access_service import (
     CountryAccessService,
 )
+from app.common.country_access.trust_proxy import resolve_client_ip_from_request
 from app.common.country_access.types import GeoLocationService
 from app.core.telemetry.emf_metrics import CountryAccessTelemetry
 
@@ -72,14 +73,7 @@ class CountryAccessGuard:
         return False
 
     def _resolve_client_ip(self, request: Request) -> str | None:
-        forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            first = forwarded.split(",")[0].strip()
-            if first:
-                return first
-        if request.client and request.client.host:
-            return request.client.host
-        return None
+        return resolve_client_ip_from_request(request)
 
 
 class CountryAccessMiddleware:

@@ -6,6 +6,9 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Security
+- Remediated SEC-AUD-001–005 from the 2026-11-21 security audit: GraphQL depth/complexity/Redis budget and concurrency enforcement, production disablement of `/example/*` routers, `CountryAccessDependency` in the global guard chain, REST CORS production origin validation, and live feature-flag admin authorization against MongoDB role and `FEATURE_FLAG_ADMIN_EMAILS`.
+
 ### Added
 - Integrated Alembic for asynchronous PostgreSQL schema migrations with native `alembic_version` state tracking, `alembic.ini`, asyncpg `env.py`, initial revisions (`0001_create_country_access`, `0002_create_background_jobs`), and programmatic migration helpers in `app/common/postgres/migrator.py`.
 - Multi-stage production `Dockerfile` with slim Python base, Astral `uv` dependency caching, `tini` PID 1 process supervision, non-root user `app` (uid 10001), automated standard-library healthcheck, and zero `.md` file runtime image invariant check.

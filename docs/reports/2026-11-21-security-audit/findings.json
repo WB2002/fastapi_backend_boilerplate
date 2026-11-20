@@ -1,0 +1,165 @@
+{
+  "summary": {
+    "confirmed": 1,
+    "needs_validation": 4,
+    "rejected": 8
+  },
+  "findings": [
+    {
+      "id": "SEC-AUD-011",
+      "unit_id": "UNIT-014",
+      "title": "Country access trusts client-supplied X-Forwarded-For without TRUST_PROXY gate",
+      "severity": "Medium",
+      "cwe_owasp": "CWE-290 / OWASP API5:2023 Broken Function Level Authorization",
+      "location": "app/common/country_access/country_access_guard.py:74-79",
+      "verdict": "confirmed",
+      "exploit_path": "When `CountryAccessService` rules block the attacker's geography, send HTTP requests with header `X-Forwarded-For: <allowed-country-resident-ip>`; `CountryAccessGuard._resolve_client_ip` returns the forged left-most XFF entry before `request.client`, bypassing GeoIP enforcement unless MaxMind maps the spoofed IP to an allowed country.",
+      "disprover_notes": "Independent disprover (Composer pass, separate from hunter): threat-model trust boundary #1 requires XFF trust only when `TRUST_PROXY` is configured; `app.state.trust_proxy` is parsed in `main.py` but never consulted in the guard. `TRUST_PROXY=false` does not prevent honoring attacker-controlled XFF. ALB-style proxies that append rather than replace XFF still leave attacker-chosen first hop. Rejection paths (service inactive, bypass paths) do not mitigate active rules.",
+      "remediation": "Implement NestJS-parity `trust_proxy` helper: use `request.client.host` unless proxy chain is validated against `TRUST_PROXY` CIDRs, then parse right-most trusted hop; add unit tests mirroring reference; align with rate-limit IP resolution."
+    },
+    {
+      "id": "SEC-AUD-012",
+      "unit_id": "UNIT-019",
+      "title": "Container image enables uvicorn forwarded-allow-ips=*",
+      "severity": "Low",
+      "cwe_owasp": "CWE-345 / OWASP API8:2023 Security Misconfiguration",
+      "location": "Dockerfile:93",
+      "verdict": "needs_validation",
+      "exploit_path": "Any host that can reach the container port can supply `X-Forwarded-For` and influence uvicorn `request.client.host`, weakening IP-based controls that rely on client address (global IP rate limit uses `request.client.host` at `rate_limit_guard.py:215-217`).",
+      "disprover_notes": "Intentional for ALB-terminated TLS behind private networking; risk depends on whether port 3000 is ever exposed without an overwriting edge proxy.",
+      "remediation": "Set `--forwarded-allow-ips` to ALB CIDRs or remove `*` when `TRUST_PROXY` lists explicit hops; document required network posture."
+    },
+    {
+      "id": "SEC-AUD-013",
+      "unit_id": "UNIT-007",
+      "title": "WebSocket admin-broadcast authorizes JWT role claim only",
+      "severity": "Low",
+      "cwe_owasp": "CWE-613 / OWASP API5:2023 Broken Function Level Authorization",
+      "location": "app/realtime/gateway.py:131-132",
+      "verdict": "needs_validation",
+      "exploit_path": "Demoted admin retains valid access token; `handle_admin_broadcast` checks `user.role == \"admin\"` from handshake JWT without live MongoDB/allowlist re-check used for REST feature flags.",
+      "disprover_notes": "Role forgery without private key rejected; stale-admin window matches pre-mitigation REST pattern now fixed via `assert_feature_flag_admin`. Blast radius limited to Socket.IO namespace broadcast.",
+      "remediation": "Re-resolve admin status from `AuthService` on connect and before `admin-broadcast`; revoke socket session on demotion."
+    },
+    {
+      "id": "SEC-AUD-006",
+      "unit_id": "UNIT-013",
+      "title": "Redis rate-limit fallback may split brain across instances",
+      "severity": "Low",
+      "cwe_owasp": "CWE-799 / OWASP API4:2023 Unrestricted Resource Consumption",
+      "location": "app/main.py:320-325",
+      "verdict": "needs_validation",
+      "exploit_path": "When Redis unavailable, `FallbackRateLimitBackend` uses per-process memory; attacker rotates across instances or waits cooldown to exceed global limits.",
+      "disprover_notes": "Depends on `RATE_LIMIT_STORAGE=redis`, instance count, and Redis SLO; intentional resilience trade-off.",
+      "remediation": "Document fail-closed option; alert on fallback activation; consider shedding instead of anonymous memory buckets in production."
+    },
+    {
+      "id": "SEC-AUD-007",
+      "unit_id": "UNIT-011",
+      "title": "ClamAV scanning disabled by default",
+      "severity": "Low",
+      "cwe_owasp": "CWE-434 / OWASP API8:2023 Security Misconfiguration",
+      "location": "app/common/uploads/uploads_service.py:54-61",
+      "verdict": "needs_validation",
+      "exploit_path": "Authenticated user uploads malware-bearing files when `UPLOAD_VIRUS_SCAN` is not true; magic-byte checks pass but no INSTREAM scan runs.",
+      "disprover_notes": "Operational configuration choice; threat model assumes `UPLOAD_VIRUS_SCAN=true` in hardened deployments.",
+      "remediation": "Require `UPLOAD_VIRUS_SCAN=true` in production `validate_env` when `/uploads` is exposed."
+    },
+    {
+      "id": "SEC-AUD-001",
+      "unit_id": "UNIT-006",
+      "title": "GraphQL complexity, depth, and Redis budgets not enforced",
+      "severity": "Medium",
+      "cwe_owasp": "CWE-400 / OWASP API4:2023 Unrestricted Resource Consumption",
+      "location": "app/graphql/complexity_extension.py:67-125",
+      "verdict": "rejected",
+      "exploit_path": "N/A — prior audit stale",
+      "disprover_notes": "`GraphqlProtectionExtension` enforces depth (`assert_query_depth`), complexity (`estimate_query_complexity`), Redis budget (`assert_budget_available`/`consume_budget`), and concurrency lease (`try_acquire_concurrency`). Wired via `build_graphql_schema` in `schema.py:80-93`.",
+      "remediation": "None."
+    },
+    {
+      "id": "SEC-AUD-002",
+      "unit_id": "UNIT-010",
+      "title": "Unauthenticated background job enqueue via public example endpoint",
+      "severity": "Medium",
+      "cwe_owasp": "CWE-306 / OWASP API2:2023 Broken Authentication",
+      "location": "app/example/example_jobs_controller.py:29-41",
+      "verdict": "rejected",
+      "exploit_path": "N/A in production",
+      "disprover_notes": "`create_app` omits example routers when `NODE_ENV=production` (`main.py:431-435`). Route remains `@public` in dev/staging only — document as non-prod surface.",
+      "remediation": "Optional: add auth even in dev or move to conformance harness."
+    },
+    {
+      "id": "SEC-AUD-003",
+      "unit_id": "UNIT-014",
+      "title": "CountryAccessGuard never mounted in ASGI pipeline",
+      "severity": "Medium",
+      "cwe_owasp": "CWE-284 / OWASP API5:2023 Broken Function Level Authorization",
+      "location": "app/main.py:350-366",
+      "verdict": "rejected",
+      "exploit_path": "N/A",
+      "disprover_notes": "`CountryAccessDependency` is registered on `app.router.dependencies` after JWT and before rate limit; `check_access` runs per request. Middleware variant exists but dependency wiring satisfies enforcement path.",
+      "remediation": "None."
+    },
+    {
+      "id": "SEC-AUD-004",
+      "unit_id": "UNIT-018",
+      "title": "REST CORS defaults to wildcard origins with credentials enabled",
+      "severity": "Low",
+      "cwe_owasp": "CWE-942 / OWASP API8:2023 Security Misconfiguration",
+      "location": "app/main.py:205-208",
+      "verdict": "rejected",
+      "exploit_path": "N/A in production",
+      "disprover_notes": "`assert_rest_production_origins` (`parsers.py:407-418`) fails fast when `NODE_ENV=production` and `ALLOWED_ORIGINS` is empty or `*`. Wildcard default applies to non-production only.",
+      "remediation": "None for production; document dev default."
+    },
+    {
+      "id": "SEC-AUD-005",
+      "unit_id": "UNIT-005",
+      "title": "Feature-flag admin authorization trusts JWT role claim only",
+      "severity": "Low",
+      "cwe_owasp": "CWE-613 / OWASP API5:2023 Broken Function Level Authorization",
+      "location": "app/core/feature_flag/feature_flag_permissions.py:17-38",
+      "verdict": "rejected",
+      "exploit_path": "N/A",
+      "disprover_notes": "`require_feature_flag_admin` delegates to `assert_feature_flag_admin`, which re-reads MongoDB role and `FEATURE_FLAG_ADMIN_EMAILS` on each mutation/list request.",
+      "remediation": "None."
+    },
+    {
+      "id": "SEC-AUD-008",
+      "unit_id": "UNIT-009",
+      "title": "Conformance harness SSRF to loopback",
+      "severity": "High",
+      "cwe_owasp": "CWE-918 / OWASP API10:2023 SSRF",
+      "location": "app/conformance/conformance_http_client_controller.py:32-42",
+      "verdict": "rejected",
+      "exploit_path": "N/A in production",
+      "disprover_notes": "`validate_env` raises if `CONFORMANCE_HARNESS_ENABLED=true` and `NODE_ENV=production`; route not registered otherwise.",
+      "remediation": "None required for production; keep production guard."
+    },
+    {
+      "id": "SEC-AUD-009",
+      "unit_id": "UNIT-004",
+      "title": "CSRF not enforced for Bearer-only API clients",
+      "severity": "Medium",
+      "cwe_owasp": "CWE-352 / OWASP A01 Broken Access Control",
+      "location": "app/core/csrf/csrf_middleware.py:115-127",
+      "verdict": "rejected",
+      "exploit_path": "N/A",
+      "disprover_notes": "By design: `should_enforce_csrf` returns false when Authorization Bearer present; cookie-based sessions still require double-submit.",
+      "remediation": "None; document client mode separation."
+    },
+    {
+      "id": "SEC-AUD-010",
+      "unit_id": "UNIT-008",
+      "title": "Outbound HTTP client allows private URLs when env flag set",
+      "severity": "High",
+      "cwe_owasp": "CWE-918 / OWASP API10:2023 SSRF",
+      "location": "app/core/http_client/configured_http_client.py:320-324",
+      "verdict": "rejected",
+      "exploit_path": "Requires `HTTP_CLIENT_ALLOW_PRIVATE_URLS=true`",
+      "disprover_notes": "Default blocks RFC1918/loopback; flag is explicit operator override for conformance/dev.",
+      "remediation": "Consider blocking flag in production `validate_env` if not already."
+    }
+  ]
+}

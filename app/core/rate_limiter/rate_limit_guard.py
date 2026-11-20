@@ -12,6 +12,7 @@ from starlette.routing import Match
 
 from app.common.config.resolve_coordination_storage import RateLimitStorage
 from app.common.constants import DEFAULT_GUEST_COOKIE_NAME, SKIP_RATE_LIMIT_KEY
+from app.common.country_access.trust_proxy import resolve_client_ip_from_request
 from app.common.utils.object_utils import read_cookie_field
 from app.core.rate_limiter.stores import (
     ConsumeContext,
@@ -213,8 +214,8 @@ def resolve_tracker(
     options: RateLimiterOptions,
 ) -> str | None:
     if identifier == RateLimitIdentifier.IP:
-        client = request.client
-        return (client.host if client is not None else None) or "unknown"
+        resolved = resolve_client_ip_from_request(request)
+        return resolved or "unknown"
     if identifier == RateLimitIdentifier.USER_ID:
         user = getattr(request.state, "user", None)
         raw = user.get("id") if isinstance(user, Mapping) else getattr(user, "id", None)

@@ -1,0 +1,158 @@
+{
+  "scope": "repository-wide",
+  "auditor_model": "composer-2.5-fast",
+  "units": [
+    {
+      "unit_id": "UNIT-001",
+      "surface": "infra-ci",
+      "files": [".github/workflows/ci.yml", ".cursor/policies/security.yaml"],
+      "trust_boundary": "app-to-external-api",
+      "status": "audited",
+      "checks_performed": ["SEC-OPS"]
+    },
+    {
+      "unit_id": "UNIT-002",
+      "surface": "auth-boundary",
+      "files": ["app/main.py", "app/auth/guards/jwt_auth_guard.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTH", "SEC-AUTHZ", "SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-003",
+      "surface": "api-route",
+      "files": ["app/auth/auth_controller.py", "app/auth/auth_service.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTH", "SEC-AUTHZ", "SEC-INJ"]
+    },
+    {
+      "unit_id": "UNIT-004",
+      "surface": "auth-boundary",
+      "files": ["app/auth/access_token_authenticator.py", "app/core/csrf/csrf_middleware.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTH", "SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-005",
+      "surface": "api-route",
+      "files": ["app/core/feature_flag/feature_flag_controller.py", "app/core/feature_flag/feature_flag_permissions.py"],
+      "trust_boundary": "tenant-to-tenant",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTHZ"]
+    },
+    {
+      "unit_id": "UNIT-006",
+      "surface": "api-route",
+      "files": ["app/graphql/schema.py", "app/graphql/complexity_extension.py", "app/graphql/query_limits.py", "app/graphql/redis_budget.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTHZ", "SEC-SHARP", "SEC-INJ"]
+    },
+    {
+      "unit_id": "UNIT-007",
+      "surface": "api-route",
+      "files": ["app/realtime/gateway.py", "app/realtime/socketio_server.py", "app/realtime/extract_token.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTH", "SEC-AUTHZ", "SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-008",
+      "surface": "egress-ai",
+      "files": ["app/core/http_client/configured_http_client.py", "app/common/sanitization/sanitization_pipe.py"],
+      "trust_boundary": "app-to-external-api",
+      "status": "audited",
+      "checks_performed": ["SEC-EGRESS"]
+    },
+    {
+      "unit_id": "UNIT-009",
+      "surface": "api-route",
+      "files": ["app/conformance/conformance_http_client_controller.py", "app/common/config/validate_env.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-EGRESS", "SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-010",
+      "surface": "api-route",
+      "files": ["app/example/example_jobs_controller.py", "app/example/example_notification_controller.py", "app/example/example_captcha_controller.py", "app/main.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTH", "SEC-AUTHZ"]
+    },
+    {
+      "unit_id": "UNIT-011",
+      "surface": "api-route",
+      "files": ["app/common/uploads/uploads_controller.py", "app/common/uploads/validate_upload_files.py", "app/common/uploads/uploads_service.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-INJ", "SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-012",
+      "surface": "api-route",
+      "files": ["app/core/health/health_controller.py", "app/app_controller.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-013",
+      "surface": "auth-boundary",
+      "files": ["app/core/rate_limiter/rate_limit_guard.py", "app/core/rate_limiter/stores.py", "app/main.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-SHARP", "SEC-OPS"]
+    },
+    {
+      "unit_id": "UNIT-014",
+      "surface": "auth-boundary",
+      "files": ["app/common/country_access/country_access_guard.py", "app/common/country_access/country_access_dependency.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTHZ", "SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-015",
+      "surface": "worker",
+      "files": ["app/core/background_jobs/job_enqueue_service.py", "app/core/background_jobs/worker.py"],
+      "trust_boundary": "app-to-db",
+      "status": "audited",
+      "checks_performed": ["SEC-AUTHZ", "SEC-SHARP"]
+    },
+    {
+      "unit_id": "UNIT-016",
+      "surface": "egress-ai",
+      "files": ["app/core/captcha/captcha_service.py", "app/core/notification/slack_notification_service.py"],
+      "trust_boundary": "app-to-external-api",
+      "status": "audited",
+      "checks_performed": ["SEC-EGRESS"]
+    },
+    {
+      "unit_id": "UNIT-017",
+      "surface": "data-access",
+      "files": ["app/auth/schemas/user_schema.py", "app/core/feature_flag/repository.py"],
+      "trust_boundary": "app-to-db",
+      "status": "audited",
+      "checks_performed": ["SEC-INJ", "SEC-AUTHZ"]
+    },
+    {
+      "unit_id": "UNIT-018",
+      "surface": "auth-boundary",
+      "files": ["app/common/config/validate_env.py", "app/common/config/env_schema.py", "app/common/config/parsers.py"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-SHARP", "SEC-OPS"]
+    },
+    {
+      "unit_id": "UNIT-019",
+      "surface": "infra-ci",
+      "files": ["Dockerfile"],
+      "trust_boundary": "public-to-app",
+      "status": "audited",
+      "checks_performed": ["SEC-SHARP", "SEC-OPS"]
+    }
+  ]
+}

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import logging
 import os
 from collections.abc import Mapping
 from typing import Any, Final
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from strawberry.fastapi import GraphQLRouter
@@ -19,8 +20,10 @@ from app.common.config.parse_http_server_timeouts import (
 )
 from app.common.config.parse_trust_proxy import parse_trust_proxy
 from app.common.config.parsers import (
+    assert_rest_production_origins,
     assert_websocket_production_origins,
     parse_background_jobs_config,
+    parse_country_access_options,
     parse_inbound_bulkhead_config,
     parse_inbound_load_level_config,
     parse_non_negative_int,
@@ -36,6 +39,16 @@ from app.common.config.resolve_coordination_storage import (
 from app.common.config.validate_env import (
     is_conformance_harness_enabled,
     validate_env,
+)
+from app.common.country_access import (
+    CountryAccessGuard,
+    CountryAccessService,
+    MaxMindGeoLocationService,
+    PostgresCountryAccessRepository,
+)
+from app.common.country_access.country_access_dependency import CountryAccessDependency
+from app.common.country_access.country_access_service import (
+    CountryAccessModuleOptions as ServiceCountryAccessOptions,
 )
 from app.common.filters.all_exceptions_filter import (
     AllExceptionsFilter,
@@ -110,9 +123,13 @@ from app.example import (
     example_notification_router,
     set_job_enqueue_service,
 )
-from app.graphql.schema import schema
+from app.graphql.gql_subject import resolve_gql_subject
+from app.graphql.redis_budget import RedisServiceBudgetClient
+from app.graphql.schema import build_graphql_schema
 from app.instrumentation import register_instrumentation
 from app.realtime.socketio_server import create_socketio_app
+
+_logger = logging.getLogger(__name__)
 
 HELMET_CSP_POLICY: Final[str] = (
     "default-src 'self' https://sandbox.embed.apollographql.com; "
@@ -208,6 +225,7 @@ def create_app(
     node_env = validated_env.get("NODE_ENV", "development")
     ws_config = parse_websocket_config(validated_env)
     assert_websocket_production_origins(ws_config, node_env)
+    assert_rest_production_origins(validated_env.get("ALLOWED_ORIGINS"), node_env)
 
     configure_structlog(validated_env)
     register_instrumentation(validated_env)
@@ -310,14 +328,39 @@ def create_app(
     rate_limit_options = default_rate_limiter_options(storage=rate_limit_storage)
     rate_limit_guard = RateLimitGuard(rate_limit_backend, rate_limit_options)
 
+    ca_config = parse_country_access_options(validated_env)
+    ca_repo = PostgresCountryAccessRepository(postgres_pool)
+    ca_service = CountryAccessService(
+        ca_repo,
+        ServiceCountryAccessOptions(
+            unknown_country_policy=(
+                "allow" if ca_config.unknown_country_policy == "allow" else "deny"
+            ),
+            bypass_paths=ca_config.bypass_paths,
+            refresh_interval_ms=ca_config.refresh_interval_ms,
+        ),
+    )
+    geo = MaxMindGeoLocationService(database_path=ca_config.geoip_database_path)
+    if os.path.isfile(ca_config.geoip_database_path):
+        try:
+            geo.init_reader()
+        except Exception as exc:
+            _logger.warning("GeoIP reader not loaded: %s", exc)
+    country_guard = CountryAccessGuard(ca_service, geo)
+    country_dep = CountryAccessDependency(country_guard, ca_service)
+    resolved_shutdown_state.register_before_close(ca_service.stop)
+    resolved_shutdown_state.register_before_close(geo.close)
+
     app.state.bulkhead_service = bulkhead_service
     app.state.auth_service = auth_service
     app.state.auth_controller = auth_controller
     app.state.rate_limit_backend = rate_limit_backend
+    app.state.country_access_service = ca_service
     app.router.dependencies.extend(
         [
             Depends(bulkhead_guard),
             Depends(jwt_guard),
+            Depends(country_dep),
             Depends(rate_limit_guard),
         ]
     )
@@ -385,13 +428,40 @@ def create_app(
     app.include_router(feature_flag_router)
     app.include_router(uploads_router)
 
-    # Example Routers
-    app.include_router(example_captcha_router)
-    app.include_router(example_notification_router)
-    app.include_router(example_jobs_router)
+    # Example Routers (disabled in production — SEC-AUD-002)
+    if node_env != "production":
+        app.include_router(example_captcha_router)
+        app.include_router(example_notification_router)
+        app.include_router(example_jobs_router)
 
     # GraphQL
-    graphql_router = GraphQLRouter(schema)
+    gql_redis = RedisServiceBudgetClient(redis_service=redis_service)
+    graphql_schema = build_graphql_schema(
+        redis_client=gql_redis,
+        env=validated_env,
+    )
+
+    async def graphql_context(
+        request: Request, response: Response
+    ) -> dict[str, object]:
+        user = getattr(request.state, "user", None)
+        user_id = getattr(user, "id", None) if user is not None else None
+        guest_id = getattr(request.state, "guest_id", None)
+        scope_state = (
+            request.scope.get("state") if isinstance(request.scope, dict) else None
+        )
+        if isinstance(scope_state, dict) and guest_id is None:
+            raw_guest = scope_state.get("guest_id")
+            guest_id = str(raw_guest) if raw_guest is not None else None
+        subject = resolve_gql_subject(
+            user_id=str(user_id) if user_id is not None else None,
+            guest_id=str(guest_id) if guest_id is not None else None,
+            cookies=request.cookies,
+            scope_state=scope_state if isinstance(scope_state, dict) else None,
+        )
+        return {"request": request, "response": response, "subject": subject}
+
+    graphql_router = GraphQLRouter(graphql_schema, context_getter=graphql_context)
     app.include_router(graphql_router, prefix="/graphql")
 
     # Conformance Harness (only registered when enabled)

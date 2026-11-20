@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
-from app.auth.constants import UserRole
+from app.auth.auth_service import AuthService
 from app.auth.guards.jwt_auth_guard import get_current_user
 from app.auth.types import AuthenticatedUser
 from app.core.feature_flag.audit_service import FeatureFlagAuditService
@@ -15,21 +15,21 @@ from app.core.feature_flag.dto import (
 )
 from app.core.feature_flag.evaluator import feature_flag_to_dict
 from app.core.feature_flag.feature_flag_manager import FeatureFlagManager
+from app.core.feature_flag.feature_flag_permissions import (
+    assert_feature_flag_admin,
+    get_auth_service,
+)
 from app.core.feature_flag.feature_flag_service import FeatureFlagService
 from app.core.feature_flag.repository import FeatureFlagRepository
 
 router = APIRouter(prefix="/feature-flags", tags=["FeatureFlags"])
 
 
-def require_feature_flag_admin(
+async def require_feature_flag_admin(
     user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> AuthenticatedUser:
-    role = user.role.value if isinstance(user.role, UserRole) else str(user.role)
-    if role.lower() != UserRole.ADMIN.value:
-        raise HTTPException(
-            status_code=403, detail="Insufficient feature-flag permissions"
-        )
-    return user
+    return await assert_feature_flag_admin(user, auth_service=auth_service)
 
 
 def get_feature_flag_manager() -> FeatureFlagManager:

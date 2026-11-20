@@ -404,6 +404,20 @@ def assert_websocket_production_origins(config: WebSocketConfig, node_env: str) 
         )
 
 
+def assert_rest_production_origins(raw_origins: str | None, node_env: str) -> None:
+    if node_env != "production":
+        return
+    if raw_origins is None or trim_js(str(raw_origins)) == "":
+        raise ValueError(
+            "ALLOWED_ORIGINS must list explicit origins when NODE_ENV=production"
+        )
+    origins = [part.strip() for part in raw_origins.split(",") if part.strip()]
+    if not origins or any(origin == "*" for origin in origins):
+        raise ValueError(
+            "ALLOWED_ORIGINS must list explicit origins when NODE_ENV=production"
+        )
+
+
 def is_websocket_enabled(env: Mapping[str, str | None] | None = None) -> bool:
     target = os.environ if env is None else env
     return parse_bool_variant_c(target.get("WEBSOCKET_ENABLED"), True)
