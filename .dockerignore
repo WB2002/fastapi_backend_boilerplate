@@ -6,6 +6,7 @@
 .github/
 .cursor/
 .agents/
+.superpowers/
 
 # Documentation & Markdown files (CRITICAL: zero .md files in runtime image)
 *.md
@@ -27,6 +28,7 @@ ENV/
 
 # Testing & coverage
 tests/
+scripts/
 .pytest_cache/
 .coverage
 coverage.json

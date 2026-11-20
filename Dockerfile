@@ -55,9 +55,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     UVICORN_TIMEOUT_KEEP_ALIVE=65
 
-# Install tini for clean signal forwarding and zombie reaping (PID 1)
+# Install tini for clean signal forwarding and zombie reaping (PID 1), and curl for fast healthchecks
 RUN apt-get update \
- && apt-get install -y --no-install-recommends tini \
+ && apt-get install -y --no-install-recommends tini curl \
  && rm -rf /var/lib/apt/lists/*
 
 # Non-root user (uid 10001)
@@ -75,21 +75,22 @@ FROM runtime-base AS api
 COPY --from=builder-base /opt/venv /opt/venv
 COPY --chown=app:app app/ ./app/
 COPY --chown=app:app migrations/ ./migrations/
-COPY --chown=app:app alembic.ini ./
-COPY --chown=app:app schema.graphql ./
-COPY --chown=app:app alembic.ini ./
+COPY --chown=app:app alembic.ini schema.graphql ./
 
+# Pre-compile application bytecode to eliminate startup compile latency
 # Invariant check: enforce zero markdown files in the final runtime container
-RUN find /app -name "*.md" | (! grep .)
+RUN python -m compileall -q /app \
+ && chown -R app:app /app \
+ && find /app -name "*.md" | (! grep .)
 
 USER app
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD ["python", "-c", "import urllib.request,sys\ntry:\n    r = urllib.request.urlopen('http://localhost:3000/health/live', timeout=2)\n    sys.exit(0 if r.status == 200 else 1)\nexcept Exception:\n    sys.exit(1)\n"]
+  CMD curl -f http://localhost:3000/health/live || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3000", "--proxy-headers", "--forwarded-allow-ips=*"]
 
 ###############################################################################
 # Target: worker
@@ -102,8 +103,11 @@ COPY --chown=app:app app/ ./app/
 COPY --chown=app:app migrations/ ./migrations/
 COPY --chown=app:app alembic.ini ./
 
+# Pre-compile application bytecode to eliminate startup compile latency
 # Invariant check: enforce zero markdown files in the final runtime container
-RUN find /app -name "*.md" | (! grep .)
+RUN python -m compileall -q /app \
+ && chown -R app:app /app \
+ && find /app -name "*.md" | (! grep .)
 
 USER app
 
