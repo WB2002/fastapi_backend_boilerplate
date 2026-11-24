@@ -302,3 +302,21 @@ class TestRequestDeadlineMiddleware:
 
         with pytest.raises(RequestCancelledError):
             await mw(scope, mock_receive, mock_send)
+
+    async def test_releases_deadline_internals_after_request_completion(self) -> None:
+        import gc
+
+        from app.core.request_deadline.deadline_context import _internals_by_signal
+
+        app = self._build_test_app(default_timeout_ms=2_000, max_timeout_ms=5_000)
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://testserver",
+        ) as client:
+            for _ in range(25):
+                res = await client.get("/fast")
+                assert res.status_code == 200
+
+        gc.collect()
+        assert len(_internals_by_signal) == 0

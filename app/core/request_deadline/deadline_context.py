@@ -171,7 +171,10 @@ class DeadlineContext:
 
     @staticmethod
     def reset(token: Token[RequestDeadlineStore | None]) -> None:
+        current = _deadline_context_var.get()
         _deadline_context_var.reset(token)
+        if current is not None and current is not token.old_value:
+            _internals_by_signal.pop(current.signal, None)
 
     @staticmethod
     def run[T](
