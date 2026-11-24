@@ -92,7 +92,7 @@ jobs:
       - name: Upload SARIF to GitHub Security
         # SARIF upload needs Settings -> Security -> Code scanning enabled on the repo.
         if: always() && vars.CODEQL_UPLOAD == 'true' && hashFiles('reports/fastapi-backend-boilerplate/results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@d2aacf54c2fbc910db8d7ec338fdb54ea48c692d # v3
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v3
         with:
           sarif_file: reports/fastapi-backend-boilerplate/results.sarif
 
