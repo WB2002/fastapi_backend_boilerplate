@@ -152,7 +152,9 @@ def _extract_path(request: Request | Mapping[str, Any] | Any) -> str:
         if "path" in request and isinstance(request["path"], str):
             qs = request.get("query_string")
             if isinstance(qs, (bytes, bytearray)) and qs:
-                return f"{request['path']}?{qs.decode('latin-1')}"
+                path_val = request["path"]
+                qs_str = qs.decode("latin-1")
+                return "?".join((path_val, qs_str))
             return request["path"]
     url_attr = getattr(request, "url", None)
     if isinstance(url_attr, str):

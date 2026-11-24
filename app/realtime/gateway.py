@@ -60,7 +60,10 @@ class RealtimeGateway:
             handshake, allow_query_token=self._allow_query_token
         )
         if not token:
-            logger.warning("WebSocket connect rejected: missing token for sid %s", sid)
+            logger.warning(
+                "WebSocket connect rejected: unauthenticated handshake for sid %s",
+                sid,
+            )
             return False
 
         try:
