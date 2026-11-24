@@ -12,7 +12,15 @@ if [ "${SEMGREP_CONFIG:-}" = "auto" ]; then
   CONFIG="auto"
 fi
 
-uv run semgrep scan \
+if command -v semgrep >/dev/null 2>&1; then
+  SEMGREP_CMD=(semgrep)
+elif command -v uvx >/dev/null 2>&1; then
+  SEMGREP_CMD=(uvx semgrep)
+else
+  SEMGREP_CMD=(uv tool run semgrep)
+fi
+
+"${SEMGREP_CMD[@]}" scan \
   --config "$CONFIG" \
   --error \
   --exclude 'tests' \

@@ -57,11 +57,18 @@ def mongo_direct_connection_uri(
     """Ensure ``directConnection=true`` and a database path on a MongoDB URI."""
     parsed = urlparse(uri)
     path = parsed.path
-    if path in ("", "/"):
+    added_default_db = path in ("", "/")
+    if added_default_db:
         path = f"/{default_db.lstrip('/')}"
     params = parse_qsl(parsed.query, keep_blank_values=True)
     if not any(k.lower() == "directconnection" for k, _ in params):
         params.append(("directConnection", "true"))
+    if (
+        added_default_db
+        and parsed.username
+        and not any(k.lower() == "authsource" for k, _ in params)
+    ):
+        params.append(("authSource", "admin"))
     return urlunparse(parsed._replace(path=path, query=urlencode(params)))
 
 
