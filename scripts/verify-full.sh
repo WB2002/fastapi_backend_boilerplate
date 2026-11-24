@@ -20,7 +20,9 @@ echo "== 4. quality ratchet =="
 ./scripts/ratchet.sh
 
 echo "== 5. integration test suite =="
-if command -v docker >/dev/null 2>&1 && (docker info >/dev/null 2>&1 || [ -S /var/run/docker.sock ]); then
+if [ "${SKIP_INTEGRATION:-0}" = "1" ]; then
+  echo "notice: SKIP_INTEGRATION=1; skipping live container integration suite"
+elif command -v docker >/dev/null 2>&1 && (docker info >/dev/null 2>&1 || [ -S /var/run/docker.sock ]); then
   uv run pytest tests/integration
 else
   echo "notice: Docker unavailable; skipping live container integration suite"

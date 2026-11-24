@@ -1,0 +1,22 @@
+title = "fastapi-backend-boilerplate"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Placeholders and test fixtures that are not real secrets"
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.conformance\.example$''',
+  '''(^|/)tests/''',
+  '''(^|/)\.venv/''',
+  '''(^|/)\.worktrees/''',
+  '''(^|/)\.reference_nestjs/''',
+  '''(^|/)\.conformance-runner/''',
+  '''(^|/)coverage\.json$''',
+]
+regexes = [
+  '''your-random-secret''',
+  '''super-secret-token''',
+  '''conformance-secret''',
+]

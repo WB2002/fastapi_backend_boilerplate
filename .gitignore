@@ -58,3 +58,7 @@ pids/
 *.seed
 *.pid.lock
 .osv-scan-output.json
+
+# Conformance audit reports and runner checkout
+/reports
+.conformance-runner/

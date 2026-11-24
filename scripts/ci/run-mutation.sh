@@ -7,6 +7,10 @@ echo "== running mutation testing (mutmut) =="
 
 target_files="${1:-}"
 
+if [ -z "$target_files" ] && [ -n "${QUALITY_BASE_REF:-}" ]; then
+  target_files=$(git diff --name-only "${QUALITY_BASE_REF}...HEAD" 2>/dev/null | grep -E '^app/.*\.py$' || true)
+fi
+
 if [ -z "$target_files" ]; then
   target_files=$(git diff --name-only HEAD 2>/dev/null | grep -E '^app/.*\.py$' || true)
 fi

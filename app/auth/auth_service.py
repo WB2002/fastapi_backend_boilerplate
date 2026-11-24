@@ -161,7 +161,12 @@ class AuthService:
             firstName=first_name,
             lastName=last_name,
         )
-        return await self.user_repository.create(new_user)
+        try:
+            return await self.user_repository.create(new_user)
+        except Exception as exc:
+            if getattr(exc, "code", None) == 11000:
+                raise ConflictException("Email already in use") from exc
+            raise
 
     async def validate_user(
         self,
