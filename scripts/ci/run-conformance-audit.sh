@@ -230,7 +230,7 @@ if [[ -n "${CONFORMANCE_APP_CMD}" ]]; then
   ${CONFORMANCE_APP_CMD} > /tmp/fastapi-conformance.log 2>&1 &
 else
   "${PYTHON_BIN}" -m uvicorn app.main:app \
-    --host 127.0.0.1 \
+    --host "${HOST:-0.0.0.0}" \
     --port "${PORT}" \
     --proxy-headers \
     --forwarded-allow-ips="*" \
