@@ -4,13 +4,18 @@ import asyncio
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.conformance.conformance_harness_auth_guard import (
+    JwtAuthGuard,
     require_conformance_harness_token,
 )
 from app.conformance.dto import ConformancePriorityQueryDto
 from app.core.overload import ApiPriorityLevel, api_priority
 from app.core.request_deadline import throw_if_aborted
+
+_ROUTE_AUTH_GUARD = JwtAuthGuard
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(
     tags=["Conformance Priority"],

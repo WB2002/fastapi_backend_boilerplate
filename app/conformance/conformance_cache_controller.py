@@ -3,12 +3,17 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 
 from app.conformance.conformance_cache_service import ConformanceCacheService
 from app.conformance.conformance_harness_auth_guard import (
+    JwtAuthGuard,
     require_conformance_harness_token,
 )
 from app.conformance.dto import ConformanceCacheRequestDto
+
+_ROUTE_AUTH_GUARD = JwtAuthGuard
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(
     tags=["Conformance Cache"],

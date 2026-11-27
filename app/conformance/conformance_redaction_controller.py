@@ -4,12 +4,17 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 
 from app.conformance.conformance_harness_auth_guard import (
+    JwtAuthGuard,
     require_conformance_harness_token,
 )
 from app.conformance.dto import ConformanceRedactionRequestDto
 from app.core.redaction import redact_for_log, redact_otel_attributes
+
+_ROUTE_AUTH_GUARD = JwtAuthGuard
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(
     tags=["Conformance Redaction"],

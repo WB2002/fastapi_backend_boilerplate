@@ -3,12 +3,15 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 
 from app.common.decorators import public
 from app.core.background_jobs.job_enqueue_service import JobEnqueueService
 from app.core.background_jobs.types import EnqueueJobInput
 from app.example.dto import EnqueueEchoJobDto
 from app.example.jobs.example_echo_job_handler import EXAMPLE_ECHO_JOB_NAME
+
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(tags=["Example Jobs"])
 

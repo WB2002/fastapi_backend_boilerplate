@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.conformance.conformance_harness_auth_guard import (
+    JwtAuthGuard,
     require_conformance_harness_token,
 )
 from app.core.rate_limiter import (
@@ -13,6 +15,9 @@ from app.core.rate_limiter import (
     RateLimitMethodConfig,
     rate_limit,
 )
+
+_ROUTE_AUTH_GUARD = JwtAuthGuard
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(
     tags=["Conformance Rate Limit"],

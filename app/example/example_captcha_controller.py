@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 
 from app.common.decorators import public
 from app.core.captcha import (
@@ -15,6 +16,8 @@ from app.core.captcha import (
     HCaptchaService,
 )
 from app.example.dto import ExampleCaptchaRequestDto
+
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(tags=["Example"])
 

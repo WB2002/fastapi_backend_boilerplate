@@ -9,6 +9,7 @@ from typing import Any, Final
 
 import psutil
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
 from app.common.config.parsers import parse_js_int, parse_positive_int
 from app.common.decorators import (
@@ -24,6 +25,8 @@ from app.common.postgres.postgres_pool import PostgresPool, PostgresPoolOptions
 from app.common.redis.redis_service import RedisService
 from app.core.health.health_snapshot import HealthSnapshot
 from app.core.shutdown.shutdown_state import ShutdownState, get_shutdown_state
+
+_ROUTE_VALIDATION = BaseModel
 
 DEFAULT_HEALTH_CACHE_TTL_MS: Final[int] = 2_000
 DEFAULT_HEAP_THRESHOLD_BYTES: Final[int] = 150 * 1024 * 1024

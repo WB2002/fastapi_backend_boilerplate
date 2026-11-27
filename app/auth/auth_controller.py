@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 from pydantic import ValidationError
 
 from app.auth.access_token_authenticator import UnauthorizedException
 from app.auth.auth_service import AuthService
 from app.auth.constants import DEFAULT_ACCESS_TOKEN_TTL, DEFAULT_SESSION_TTL
 from app.auth.dto import LoginDto, RegisterDto
-from app.auth.guards.jwt_auth_guard import JwtAuthGuard
-from app.auth.types import AuthResponsePayload
+from app.auth.guards.jwt_auth_guard import JwtAuthGuard, get_current_user
+from app.auth.types import AuthenticatedUser, AuthResponsePayload
 from app.common.config.parsers import ApiPriorityLevel, parse_positive_int
 from app.common.constants import (
     ACCESS_TOKEN_COOKIE,
@@ -219,6 +219,9 @@ class AuthController:
         tokens = await self.auth_service.refresh_session(incoming_session_id)
         return self._apply_session_cookies(response, tokens)
 
+    def get_me(self, user: AuthenticatedUser) -> dict[str, str]:
+        return {"id": user.id, "email": user.email}
+
     async def logout(
         self,
         request: Request | Any,
@@ -367,6 +370,14 @@ def create_auth_router(
         ctrl = _resolve_controller(request)
         return await ctrl.refresh(request, response, session_id_body)
 
+    @router.get("/auth/me")
+    async def auth_me(
+        request: Request,
+        user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    ) -> dict[str, str]:
+        ctrl = _resolve_controller(request)
+        return ctrl.get_me(user)
+
     @router.post("/auth/logout", status_code=200)
     async def auth_logout(
         request: Request,
@@ -378,7 +389,14 @@ def create_auth_router(
         ctrl = _resolve_controller(request)
         return await ctrl.logout(request, response, session_id_body)
 
-    for route_fn in (auth_csrf, auth_register, auth_login, auth_refresh, auth_logout):
+    for route_fn in (
+        auth_csrf,
+        auth_register,
+        auth_login,
+        auth_refresh,
+        auth_me,
+        auth_logout,
+    ):
         setattr(route_fn, API_PRIORITY_KEY, ApiPriorityLevel.CRITICAL)
 
     return router

@@ -7,6 +7,8 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 
+from app.auth.guards.jwt_auth_guard import JwtAuthGuard
+
 
 class ConformanceHarnessAuthGuard:
     """Bearer token guard for conformance harness routes."""
@@ -64,5 +66,6 @@ ConformanceHarnessTokenDep = Annotated[None, Depends(require_conformance_harness
 __all__ = [
     "ConformanceHarnessAuthGuard",
     "ConformanceHarnessTokenDep",
+    "JwtAuthGuard",
     "require_conformance_harness_token",
 ]

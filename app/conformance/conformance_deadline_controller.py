@@ -5,12 +5,17 @@ import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.conformance.conformance_harness_auth_guard import (
+    JwtAuthGuard,
     require_conformance_harness_token,
 )
 from app.conformance.dto import ConformanceDeadlineQueryDto
 from app.core.request_deadline import remaining_ms, throw_if_aborted
+
+_ROUTE_AUTH_GUARD = JwtAuthGuard
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(
     tags=["Conformance Deadline"],

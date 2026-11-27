@@ -4,6 +4,7 @@ import uuid
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.common.decorators import public
 from app.core.notification import (
@@ -12,6 +13,8 @@ from app.core.notification import (
     SlackNotificationService,
 )
 from app.example.dto import CreateExampleNotificationDto
+
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(tags=["Example"])
 

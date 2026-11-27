@@ -3,15 +3,20 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 
 from app.conformance.assert_loopback_target_url import assert_loopback_target_url
 from app.conformance.conformance_harness_auth_guard import (
+    JwtAuthGuard,
     require_conformance_harness_token,
 )
 from app.conformance.conformance_http_client_service import (
     ConformanceHttpClientService,
 )
 from app.conformance.dto import ConformanceHttpClientRequestDto
+
+_ROUTE_AUTH_GUARD = JwtAuthGuard
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(
     tags=["Conformance HTTP Client"],

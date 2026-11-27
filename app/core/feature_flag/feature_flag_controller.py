@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.auth.auth_service import AuthService
 from app.auth.guards.jwt_auth_guard import get_current_user
@@ -21,6 +22,8 @@ from app.core.feature_flag.feature_flag_permissions import (
 )
 from app.core.feature_flag.feature_flag_service import FeatureFlagService
 from app.core.feature_flag.repository import FeatureFlagRepository
+
+_ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(tags=["FeatureFlags"])
 
