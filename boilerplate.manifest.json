@@ -39,5 +39,21 @@
       "enabled": true,
       "path": "/socket.io/?EIO=4&transport=websocket"
     }
+  },
+  "architecture": {
+    "publicRoutes": [
+      "/",
+      "/health",
+      "/health/live",
+      "/health/ready",
+      "/auth/csrf",
+      "/auth/register",
+      "/auth/login",
+      "/auth/refresh",
+      "/example/captcha",
+      "/example/jobs/echo",
+      "/example/notification"
+    ],
+    "requireAuthOnNonPublic": true
   }
 }

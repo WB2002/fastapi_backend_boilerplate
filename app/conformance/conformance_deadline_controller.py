@@ -6,15 +6,19 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 
-from app.common.decorators import public
+from app.conformance.conformance_harness_auth_guard import (
+    require_conformance_harness_token,
+)
 from app.conformance.dto import ConformanceDeadlineQueryDto
 from app.core.request_deadline import remaining_ms, throw_if_aborted
 
-router = APIRouter(prefix="/conformance/deadline", tags=["Conformance Deadline"])
+router = APIRouter(
+    tags=["Conformance Deadline"],
+    dependencies=[Depends(require_conformance_harness_token)],
+)
 
 
-@router.get("/slow")
-@public
+@router.get("/conformance/deadline/slow")
 async def slow(
     query: Annotated[ConformanceDeadlineQueryDto, Depends()],
 ) -> dict[str, Any]:

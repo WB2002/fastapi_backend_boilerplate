@@ -607,7 +607,7 @@ def create_health_router(
     controller: HealthController | None = None,
 ) -> APIRouter:
     """Create the FastAPI APIRouter for `/health`, `/health/ready`, `/health/live`."""
-    router = APIRouter(prefix="/health", tags=["health"])
+    router = APIRouter(tags=["health"])
 
     def _resolve_controller(request: Request) -> HealthController:
         if controller is not None:
@@ -632,7 +632,7 @@ def create_health_router(
         request.app.state.health_controller = fallback
         return fallback
 
-    @router.get("/live")
+    @router.get("/health/live")
     @public
     @skip_rate_limit
     @skip_request_deadline
@@ -643,7 +643,7 @@ def create_health_router(
         ctrl = _resolve_controller(request)
         return ctrl.live()
 
-    @router.get("")
+    @router.get("/health")
     @public
     @skip_rate_limit
     @skip_request_deadline
@@ -654,7 +654,7 @@ def create_health_router(
         ctrl = _resolve_controller(request)
         return await ctrl.check()
 
-    @router.get("/ready")
+    @router.get("/health/ready")
     @public
     @skip_rate_limit
     @skip_request_deadline

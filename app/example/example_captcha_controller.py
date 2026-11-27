@@ -16,14 +16,14 @@ from app.core.captcha import (
 )
 from app.example.dto import ExampleCaptchaRequestDto
 
-router = APIRouter(prefix="/example", tags=["Example"])
+router = APIRouter(tags=["Example"])
 
 
 def get_captcha_service() -> CaptchaService:
     return HCaptchaService()
 
 
-@router.post("/captcha")
+@router.post("/example/captcha")
 @public
 async def verify_captcha(
     dto: ExampleCaptchaRequestDto,

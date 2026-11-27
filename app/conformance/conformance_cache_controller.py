@@ -4,11 +4,16 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
 
-from app.common.decorators import public
 from app.conformance.conformance_cache_service import ConformanceCacheService
+from app.conformance.conformance_harness_auth_guard import (
+    require_conformance_harness_token,
+)
 from app.conformance.dto import ConformanceCacheRequestDto
 
-router = APIRouter(prefix="/conformance/cache", tags=["Conformance Cache"])
+router = APIRouter(
+    tags=["Conformance Cache"],
+    dependencies=[Depends(require_conformance_harness_token)],
+)
 
 _cache_service: ConformanceCacheService | None = None
 
@@ -24,8 +29,7 @@ def get_conformance_cache_service() -> ConformanceCacheService:
     return _cache_service
 
 
-@router.post("", status_code=status.HTTP_200_OK)
-@public
+@router.post("/conformance/cache", status_code=status.HTTP_200_OK)
 async def post(
     request: ConformanceCacheRequestDto,
     service: Annotated[ConformanceCacheService, Depends(get_conformance_cache_service)],
@@ -33,8 +37,7 @@ async def post(
     return await service.get_or_set(request)
 
 
-@router.delete("/{key}", status_code=status.HTTP_200_OK)
-@public
+@router.delete("/conformance/cache/{key}", status_code=status.HTTP_200_OK)
 async def delete(
     key: str,
     service: Annotated[ConformanceCacheService, Depends(get_conformance_cache_service)],

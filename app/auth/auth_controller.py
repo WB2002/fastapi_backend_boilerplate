@@ -11,6 +11,7 @@ from app.auth.access_token_authenticator import UnauthorizedException
 from app.auth.auth_service import AuthService
 from app.auth.constants import DEFAULT_ACCESS_TOKEN_TTL, DEFAULT_SESSION_TTL
 from app.auth.dto import LoginDto, RegisterDto
+from app.auth.guards.jwt_auth_guard import JwtAuthGuard
 from app.auth.types import AuthResponsePayload
 from app.common.config.parsers import ApiPriorityLevel, parse_positive_int
 from app.common.constants import (
@@ -293,7 +294,7 @@ def create_auth_router(
     controller: AuthController | None = None,
 ) -> APIRouter:
     """Create the FastAPI APIRouter for `/auth` endpoints."""
-    router = APIRouter(prefix="/auth", tags=["auth"])
+    router = APIRouter(tags=["auth"])
 
     def _resolve_controller(request: Request) -> AuthController:
         if controller is not None:
@@ -329,13 +330,13 @@ def create_auth_router(
         request.app.state.auth_controller = fallback
         return fallback
 
-    @router.get("/csrf")
+    @router.get("/auth/csrf")
     @public
     async def auth_csrf(request: Request, response: Response) -> dict[str, str]:
         ctrl = _resolve_controller(request)
         return ctrl.get_csrf(response)
 
-    @router.post("/register", status_code=201)
+    @router.post("/auth/register", status_code=201)
     @public
     async def auth_register(
         register_dto: RegisterDto,
@@ -344,7 +345,7 @@ def create_auth_router(
         ctrl = _resolve_controller(request)
         return await ctrl.register(register_dto)
 
-    @router.post("/login", status_code=200)
+    @router.post("/auth/login", status_code=200)
     @public
     async def auth_login(
         request: Request,
@@ -354,7 +355,7 @@ def create_auth_router(
         ctrl = _resolve_controller(request)
         return await ctrl.login(body, request, response)
 
-    @router.post("/refresh", status_code=200)
+    @router.post("/auth/refresh", status_code=200)
     @public
     async def auth_refresh(
         request: Request,
@@ -366,7 +367,7 @@ def create_auth_router(
         ctrl = _resolve_controller(request)
         return await ctrl.refresh(request, response, session_id_body)
 
-    @router.post("/logout", status_code=200)
+    @router.post("/auth/logout", status_code=200)
     async def auth_logout(
         request: Request,
         response: Response,
@@ -385,5 +386,6 @@ def create_auth_router(
 
 __all__ = [
     "AuthController",
+    "JwtAuthGuard",
     "create_auth_router",
 ]

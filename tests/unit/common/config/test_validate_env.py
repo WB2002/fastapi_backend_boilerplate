@@ -27,10 +27,10 @@ EXPECTED_REQUIRED_KEYS = (
 )
 
 
-def test_env_schema_has_exact_103_keys_in_order() -> None:
-    assert len(ENV_SCHEMA) == 103
+def test_env_schema_has_exact_105_keys_in_order() -> None:
+    assert len(ENV_SCHEMA) == 105
     assert sum(1 for field in ENV_SCHEMA.values() if field.required) == 10
-    assert sum(1 for field in ENV_SCHEMA.values() if not field.required) == 93
+    assert sum(1 for field in ENV_SCHEMA.values() if not field.required) == 95
 
 
 def test_env_schema_exact_required_keys() -> None:
@@ -253,7 +253,7 @@ def test_is_conformance_harness_enabled(monkeypatch: pytest.MonkeyPatch) -> None
     assert is_conformance_harness_enabled() is False
 
 
-def test_env_example_documents_all_103_schema_keys() -> None:
+def test_env_example_documents_all_105_schema_keys() -> None:
     example_text = (REPO_ROOT / ".env.example").read_text(encoding="utf-8")
     documented_keys: set[str] = set()
     for line in example_text.splitlines():

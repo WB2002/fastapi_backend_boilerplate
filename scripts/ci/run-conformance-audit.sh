@@ -118,6 +118,9 @@ if [[ -f "${ROOT_DIR}/.env.conformance.example" ]]; then
   set +a
 fi
 
+export CONFORMANCE_HARNESS_TOKEN="${CONFORMANCE_HARNESS_TOKEN:-conformance-harness-secret-token}"
+export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://127.0.0.1:3000,http://localhost:3000}"
+export RATE_LIMIT_GLOBAL_IP_LIMIT="${RATE_LIMIT_GLOBAL_IP_LIMIT:-100000}"
 export PORT="${PORT:-3000}"
 export MONGO_URI="${MONGO_URI:-mongodb://127.0.0.1:27017/fastapi-conformance}"
 export REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
@@ -283,6 +286,11 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
 sleep 1
 
 export CONFORMANCE_TARGET_PID="${APP_PID}"
+
+# Static scanners should not treat the local virtualenv as application source.
+if [[ -d "${ROOT_DIR}/.venv" ]]; then
+  rm -rf "${ROOT_DIR}/.venv"
+fi
 
 AUDIT_HELP="$("${AUDIT_BIN}" --help 2>&1 || true)"
 EXTRA_AUDIT_ARGS=()

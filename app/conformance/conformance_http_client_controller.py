@@ -4,14 +4,19 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
 
-from app.common.decorators import public
 from app.conformance.assert_loopback_target_url import assert_loopback_target_url
+from app.conformance.conformance_harness_auth_guard import (
+    require_conformance_harness_token,
+)
 from app.conformance.conformance_http_client_service import (
     ConformanceHttpClientService,
 )
 from app.conformance.dto import ConformanceHttpClientRequestDto
 
-router = APIRouter(prefix="/conformance/http-client", tags=["Conformance HTTP Client"])
+router = APIRouter(
+    tags=["Conformance HTTP Client"],
+    dependencies=[Depends(require_conformance_harness_token)],
+)
 
 _client_service: ConformanceHttpClientService | None = None
 
@@ -29,8 +34,7 @@ def get_conformance_http_client_service() -> ConformanceHttpClientService:
     return _client_service
 
 
-@router.post("", status_code=status.HTTP_200_OK)
-@public
+@router.post("/conformance/http-client", status_code=status.HTTP_200_OK)
 async def execute(
     request: ConformanceHttpClientRequestDto,
     service: Annotated[

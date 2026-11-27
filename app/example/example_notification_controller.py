@@ -5,6 +5,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 
+from app.common.decorators import public
 from app.core.notification import (
     INotification,
     NotificationService,
@@ -12,14 +13,15 @@ from app.core.notification import (
 )
 from app.example.dto import CreateExampleNotificationDto
 
-router = APIRouter(prefix="/example", tags=["Example"])
+router = APIRouter(tags=["Example"])
 
 
 def get_notification_service() -> NotificationService:
     return SlackNotificationService()
 
 
-@router.post("/notification")
+@router.post("/example/notification")
+@public
 async def send_example_notification(
     dto: CreateExampleNotificationDto,
     service: Annotated[NotificationService, Depends(get_notification_service)],

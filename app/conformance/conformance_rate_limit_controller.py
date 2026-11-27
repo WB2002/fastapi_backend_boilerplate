@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.common.decorators import public
+from app.conformance.conformance_harness_auth_guard import (
+    require_conformance_harness_token,
+)
 from app.core.rate_limiter import (
     RateLimitAlgorithm,
     RateLimitIdentifier,
@@ -12,10 +14,13 @@ from app.core.rate_limiter import (
     rate_limit,
 )
 
-router = APIRouter(prefix="/conformance/rate-limit", tags=["Conformance Rate Limit"])
+router = APIRouter(
+    tags=["Conformance Rate Limit"],
+    dependencies=[Depends(require_conformance_harness_token)],
+)
 
 
-@router.get("/user")
+@router.get("/conformance/rate-limit/user")
 @rate_limit(
     RateLimitMethodConfig(
         name="conformance-user",
@@ -29,8 +34,7 @@ def user() -> dict[str, Any]:
     return {"identifierKind": "user"}
 
 
-@router.get("/fingerprint")
-@public
+@router.get("/conformance/rate-limit/fingerprint")
 @rate_limit(
     RateLimitMethodConfig(
         name="conformance-fingerprint",
@@ -44,8 +48,7 @@ def fingerprint() -> dict[str, Any]:
     return {"identifierKind": "fingerprint"}
 
 
-@router.get("/guest")
-@public
+@router.get("/conformance/rate-limit/guest")
 @rate_limit(
     RateLimitMethodConfig(
         name="conformance-guest",

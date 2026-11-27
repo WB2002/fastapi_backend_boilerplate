@@ -10,7 +10,7 @@ from app.core.background_jobs.types import EnqueueJobInput
 from app.example.dto import EnqueueEchoJobDto
 from app.example.jobs.example_echo_job_handler import EXAMPLE_ECHO_JOB_NAME
 
-router = APIRouter(prefix="/example/jobs", tags=["Example Jobs"])
+router = APIRouter(tags=["Example Jobs"])
 
 _job_enqueue_service: JobEnqueueService | None = None
 
@@ -26,7 +26,7 @@ def get_job_enqueue_service() -> JobEnqueueService:
     return _job_enqueue_service
 
 
-@router.post("/echo", status_code=status.HTTP_201_CREATED)
+@router.post("/example/jobs/echo", status_code=status.HTTP_201_CREATED)
 @public
 async def enqueue_echo(
     dto: EnqueueEchoJobDto,

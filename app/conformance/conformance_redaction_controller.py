@@ -3,13 +3,18 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
-from app.common.decorators import public
+from app.conformance.conformance_harness_auth_guard import (
+    require_conformance_harness_token,
+)
 from app.conformance.dto import ConformanceRedactionRequestDto
 from app.core.redaction import redact_for_log, redact_otel_attributes
 
-router = APIRouter(prefix="/conformance/redaction", tags=["Conformance Redaction"])
+router = APIRouter(
+    tags=["Conformance Redaction"],
+    dependencies=[Depends(require_conformance_harness_token)],
+)
 logger = logging.getLogger("ConformanceRedactionController")
 
 MAX_FLATTEN_DEPTH = 4
@@ -47,8 +52,7 @@ def flatten_to_dotted_keys(payload: dict[str, Any]) -> dict[str, Any]:
     return dict(_flatten_to_dotted_entries(payload))
 
 
-@router.post("", status_code=status.HTTP_200_OK)
-@public
+@router.post("/conformance/redaction", status_code=status.HTTP_200_OK)
 def redact(request: ConformanceRedactionRequestDto) -> dict[str, Any]:
     logger.info("Conformance redaction payload: %s", request.payload)
     redacted_payload = redact_for_log(request.payload)

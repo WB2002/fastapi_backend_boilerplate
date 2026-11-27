@@ -100,8 +100,12 @@ from app.core.overload.priority_bulkhead_guard import (
 from app.core.overload.under_pressure import UnderPressureMiddleware
 from app.core.rate_limiter.guest_id_middleware import GuestIdMiddleware
 from app.core.rate_limiter.rate_limit_guard import (
+    RateLimiterOptions,
     RateLimitGuard,
     default_rate_limiter_options,
+)
+from app.core.rate_limiter.resolve_default_rate_limit_methods import (
+    resolve_default_rate_limit_methods,
 )
 from app.core.rate_limiter.stores import (
     FallbackRateLimitBackend,
@@ -325,7 +329,12 @@ def create_app(
         )
     else:
         rate_limit_backend = MemoryRateLimitBackend()
-    rate_limit_options = default_rate_limiter_options(storage=rate_limit_storage)
+    rate_limit_options = RateLimiterOptions(
+        storage=rate_limit_storage,
+        algorithm=default_rate_limiter_options().algorithm,
+        methods=resolve_default_rate_limit_methods(validated_env),
+        guest_cookie_name=default_rate_limiter_options().guest_cookie_name,
+    )
     rate_limit_guard = RateLimitGuard(rate_limit_backend, rate_limit_options)
 
     ca_config = parse_country_access_options(validated_env)

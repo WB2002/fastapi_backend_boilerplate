@@ -140,6 +140,8 @@ EnvKey = Literal[
     "BACKGROUND_JOBS_ORPHAN_MIN_AGE_SEC",
     # Conformance harness (test only; refused in production)
     "CONFORMANCE_HARNESS_ENABLED",
+    "CONFORMANCE_HARNESS_TOKEN",
+    "RATE_LIMIT_GLOBAL_IP_LIMIT",
 ]
 
 # Declarative 103-key environment schema
@@ -272,6 +274,8 @@ ENV_SCHEMA: Final[dict[str, EnvField]] = {
     "BACKGROUND_JOBS_ORPHAN_MIN_AGE_SEC": EnvField(required=False),
     # Conformance harness (test only; refused in production)
     "CONFORMANCE_HARNESS_ENABLED": EnvField(required=False),
+    "CONFORMANCE_HARNESS_TOKEN": EnvField(required=False),
+    "RATE_LIMIT_GLOBAL_IP_LIMIT": EnvField(required=False),
 }
 
 REQUIRED_ENV_KEYS: Final[tuple[str, ...]] = tuple(

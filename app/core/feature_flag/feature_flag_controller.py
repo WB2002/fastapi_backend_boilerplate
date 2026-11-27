@@ -22,7 +22,7 @@ from app.core.feature_flag.feature_flag_permissions import (
 from app.core.feature_flag.feature_flag_service import FeatureFlagService
 from app.core.feature_flag.repository import FeatureFlagRepository
 
-router = APIRouter(prefix="/feature-flags", tags=["FeatureFlags"])
+router = APIRouter(tags=["FeatureFlags"])
 
 
 async def require_feature_flag_admin(
@@ -39,7 +39,7 @@ def get_feature_flag_manager() -> FeatureFlagManager:
     return FeatureFlagManager(repo, svc, audit)
 
 
-@router.get("")
+@router.get("/feature-flags")
 async def list_flags(
     user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
     manager: Annotated[FeatureFlagManager, Depends(get_feature_flag_manager)],
@@ -48,7 +48,7 @@ async def list_flags(
     return [feature_flag_to_dict(f) for f in flags]
 
 
-@router.get("/{key}")
+@router.get("/feature-flags/{key}")
 async def get_flag(
     key: str,
     user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
@@ -58,7 +58,7 @@ async def get_flag(
     return feature_flag_to_dict(flag)
 
 
-@router.post("")
+@router.post("/feature-flags")
 async def create_flag(
     dto: CreateFeatureFlagDto,
     user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
@@ -69,7 +69,7 @@ async def create_flag(
     return feature_flag_to_dict(flag)
 
 
-@router.put("/{key}")
+@router.put("/feature-flags/{key}")
 async def update_flag(
     key: str,
     dto: UpdateFeatureFlagDto,
@@ -81,7 +81,7 @@ async def update_flag(
     return feature_flag_to_dict(flag)
 
 
-@router.delete("/{key}")
+@router.delete("/feature-flags/{key}")
 async def delete_flag(
     key: str,
     dto: DeleteFeatureFlagDto,
