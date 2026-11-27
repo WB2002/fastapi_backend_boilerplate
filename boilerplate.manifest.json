@@ -1,6 +1,7 @@
 {
   "name": "fastapi-backend-boilerplate",
   "language": "python",
+  "openapiUrl": "/openapi.json",
   "capabilities": {
     "health": {
       "method": "GET",
