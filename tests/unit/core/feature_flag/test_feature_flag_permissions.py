@@ -29,6 +29,23 @@ async def test_stale_jwt_admin_rejected_when_db_user() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
+async def test_db_lookup_failure_falls_back_to_jwt_and_returns_403() -> None:
+    user = AuthenticatedUser(
+        id="u1",
+        email="user@example.com",
+        jti="j1",
+        role="user",
+    )
+    auth = MagicMock()
+    auth.is_admin_email.return_value = False
+    auth.user_repository.find_by_id = AsyncMock(side_effect=RuntimeError("mongo down"))
+    with pytest.raises(HTTPException) as exc:
+        await assert_feature_flag_admin(user, auth_service=auth)
+    assert exc.value.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_allowlisted_email_without_admin_role() -> None:
     user = AuthenticatedUser(
         id="u1",

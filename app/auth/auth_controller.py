@@ -19,7 +19,12 @@ from app.common.constants import (
     API_PRIORITY_KEY,
     SESSION_ID_COOKIE,
 )
-from app.common.decorators import public
+from app.common.decorators import (
+    public,
+    skip_country_access,
+    skip_inbound_bulkhead,
+    skip_rate_limit,
+)
 from app.common.sanitization.sanitization_pipe import BadRequestException
 from app.common.utils.cookie_utils import (
     get_access_token_cookie_options,
@@ -371,6 +376,9 @@ def create_auth_router(
         return await ctrl.refresh(request, response, session_id_body)
 
     @router.get("/auth/me")
+    @skip_rate_limit
+    @skip_inbound_bulkhead
+    @skip_country_access
     async def auth_me(
         request: Request,
         user: Annotated[AuthenticatedUser, Depends(get_current_user)],

@@ -19,7 +19,11 @@ async def assert_feature_flag_admin(
     *,
     auth_service: AuthService,
 ) -> AuthenticatedUser:
-    db_user = await auth_service.user_repository.find_by_id(user.id)
+    db_user = None
+    try:
+        db_user = await auth_service.user_repository.find_by_id(user.id)
+    except Exception:
+        db_user = None
     if db_user is not None:
         raw_role = db_user.role
         if isinstance(raw_role, UserRole):

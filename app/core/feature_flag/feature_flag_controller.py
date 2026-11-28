@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 
 from app.auth.auth_service import AuthService
@@ -35,10 +35,15 @@ async def require_feature_flag_admin(
     return await assert_feature_flag_admin(user, auth_service=auth_service)
 
 
-def get_feature_flag_manager() -> FeatureFlagManager:
-    repo = FeatureFlagRepository()
+def get_feature_flag_manager(
+    request: Request,
+    _admin: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
+) -> FeatureFlagManager:
+    redis = getattr(request.app.state, "redis_service", None)
+    mongo = getattr(request.app.state, "mongo_service", None)
+    repo = FeatureFlagRepository(redis_service=redis)
     svc = FeatureFlagService(repo)
-    audit = FeatureFlagAuditService()
+    audit = FeatureFlagAuditService(mongo_service=mongo)
     return FeatureFlagManager(repo, svc, audit)
 
 
