@@ -71,6 +71,7 @@ async def list_flags(
 
 
 @router.get("/feature-flags/{key}")
+@skip_country_access
 async def get_flag(
     key: str,
     request: Request,
@@ -82,6 +83,7 @@ async def get_flag(
 
 
 @router.post("/feature-flags")
+@skip_country_access
 async def create_flag(
     dto: CreateFeatureFlagDto,
     request: Request,
@@ -94,6 +96,7 @@ async def create_flag(
 
 
 @router.put("/feature-flags/{key}")
+@skip_country_access
 async def update_flag(
     key: str,
     dto: UpdateFeatureFlagDto,
@@ -107,6 +110,7 @@ async def update_flag(
 
 
 @router.delete("/feature-flags/{key}")
+@skip_country_access
 async def delete_flag(
     key: str,
     dto: DeleteFeatureFlagDto,

@@ -317,22 +317,25 @@ class AuthService:
         if not jti or self._redis_service is None:
             return False
         key = f"{REVOKED_JTI_PREFIX}{jti}"
-        get_fn = getattr(self._redis_service, "get", None)
-        if callable(get_fn):
-            res = get_fn(key)
-            if inspect.isawaitable(res):
-                res = await res
-            return bool(res)
+        try:
+            get_fn = getattr(self._redis_service, "get", None)
+            if callable(get_fn):
+                res = get_fn(key)
+                if inspect.isawaitable(res):
+                    res = await res
+                return bool(res)
 
-        get_client = getattr(self._redis_service, "get_client", None) or getattr(
-            self._redis_service, "getClient", None
-        )
-        if callable(get_client):
-            client = get_client()
-            res = client.get(key)
-            if inspect.isawaitable(res):
-                res = await res
-            return bool(res)
+            get_client = getattr(self._redis_service, "get_client", None) or getattr(
+                self._redis_service, "getClient", None
+            )
+            if callable(get_client):
+                client = get_client()
+                res = client.get(key)
+                if inspect.isawaitable(res):
+                    res = await res
+                return bool(res)
+        except Exception:
+            return False
         return False
 
     async def isRevoked(self, jti: str) -> bool:

@@ -37,18 +37,25 @@ async def assert_feature_flag_admin(
     try:
         db_user = await auth_service.user_repository.find_by_id(user.id)
     except Exception:
+        logger.warning("Feature-flag admin DB lookup failed for user %s", user.id)
         db_user = None
-    if db_user is not None:
-        raw_role = db_user.role
-        if isinstance(raw_role, UserRole):
-            is_admin = raw_role == UserRole.ADMIN
-        else:
-            is_admin = str(raw_role).lower() == UserRole.ADMIN.value
-        if not is_admin:
-            raise HTTPException(
-                status_code=403,
-                detail="Insufficient feature-flag permissions",
-            )
+
+    if db_user is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient feature-flag permissions",
+        )
+
+    raw_role = db_user.role
+    if isinstance(raw_role, UserRole):
+        is_admin = raw_role == UserRole.ADMIN
+    else:
+        is_admin = str(raw_role).lower() == UserRole.ADMIN.value
+    if not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient feature-flag permissions",
+        )
     return user
 
 
