@@ -6,8 +6,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
+from app.auth.access_token_authenticator import UnauthorizedException
 from app.auth.auth_service import AuthService
-from app.auth.guards.jwt_auth_guard import get_current_user
 from app.auth.types import AuthenticatedUser
 from app.core.feature_flag.audit_service import FeatureFlagAuditService
 from app.core.feature_flag.dto import (
@@ -31,9 +31,12 @@ _logger = logging.getLogger("FeatureFlagController")
 
 
 async def require_feature_flag_admin(
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    request: Request,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> AuthenticatedUser:
+    user = getattr(request.state, "user", None)
+    if not isinstance(user, AuthenticatedUser):
+        raise UnauthorizedException("Unauthorized")
     try:
         return await assert_feature_flag_admin(user, auth_service=auth_service)
     except HTTPException:
@@ -46,10 +49,7 @@ async def require_feature_flag_admin(
         ) from exc
 
 
-def get_feature_flag_manager(
-    request: Request,
-    _admin: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
-) -> FeatureFlagManager:
+def build_feature_flag_manager(request: Request) -> FeatureFlagManager:
     redis = getattr(request.app.state, "redis_service", None)
     mongo = getattr(request.app.state, "mongo_service", None)
     repo = FeatureFlagRepository(redis_service=redis)
@@ -60,9 +60,10 @@ def get_feature_flag_manager(
 
 @router.get("/feature-flags")
 async def list_flags(
-    user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
-    manager: Annotated[FeatureFlagManager, Depends(get_feature_flag_manager)],
+    request: Request,
+    _admin: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
 ) -> list[dict[str, Any]]:
+    manager = build_feature_flag_manager(request)
     flags = await manager.list()
     return [feature_flag_to_dict(f) for f in flags]
 
@@ -70,9 +71,10 @@ async def list_flags(
 @router.get("/feature-flags/{key}")
 async def get_flag(
     key: str,
-    user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
-    manager: Annotated[FeatureFlagManager, Depends(get_feature_flag_manager)],
+    request: Request,
+    _admin: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
 ) -> dict[str, Any]:
+    manager = build_feature_flag_manager(request)
     flag = await manager.get(key)
     return feature_flag_to_dict(flag)
 
@@ -80,9 +82,10 @@ async def get_flag(
 @router.post("/feature-flags")
 async def create_flag(
     dto: CreateFeatureFlagDto,
+    request: Request,
     user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
-    manager: Annotated[FeatureFlagManager, Depends(get_feature_flag_manager)],
 ) -> dict[str, Any]:
+    manager = build_feature_flag_manager(request)
     actor = {"userId": user.id, "email": user.email}
     flag = await manager.create(dto, actor)
     return feature_flag_to_dict(flag)
@@ -92,9 +95,10 @@ async def create_flag(
 async def update_flag(
     key: str,
     dto: UpdateFeatureFlagDto,
+    request: Request,
     user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
-    manager: Annotated[FeatureFlagManager, Depends(get_feature_flag_manager)],
 ) -> dict[str, Any]:
+    manager = build_feature_flag_manager(request)
     actor = {"userId": user.id, "email": user.email}
     flag = await manager.update(key, dto, actor)
     return feature_flag_to_dict(flag)
@@ -104,9 +108,10 @@ async def update_flag(
 async def delete_flag(
     key: str,
     dto: DeleteFeatureFlagDto,
+    request: Request,
     user: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],
-    manager: Annotated[FeatureFlagManager, Depends(get_feature_flag_manager)],
 ) -> dict[str, bool]:
+    manager = build_feature_flag_manager(request)
     actor = {"userId": user.id, "email": user.email}
     await manager.delete(key, dto, actor)
     return {"ok": True}
