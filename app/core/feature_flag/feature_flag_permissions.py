@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import HTTPException, Request
 
 from app.auth.auth_service import AuthService
 from app.auth.constants import UserRole
 from app.auth.types import AuthenticatedUser
+
+logger = logging.getLogger("FeatureFlagPermissions")
 
 
 def get_auth_service(request: Request) -> AuthService:

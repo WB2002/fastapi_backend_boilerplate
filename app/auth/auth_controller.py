@@ -24,6 +24,8 @@ from app.common.decorators import (
     skip_country_access,
     skip_inbound_bulkhead,
     skip_rate_limit,
+    skip_request_deadline,
+    skip_tracing,
 )
 from app.common.sanitization.sanitization_pipe import BadRequestException
 from app.common.utils.cookie_utils import (
@@ -377,8 +379,10 @@ def create_auth_router(
 
     @router.get("/auth/me")
     @skip_rate_limit
-    @skip_inbound_bulkhead
+    @skip_request_deadline
     @skip_country_access
+    @skip_inbound_bulkhead
+    @skip_tracing
     async def auth_me(
         request: Request,
         user: Annotated[AuthenticatedUser, Depends(get_current_user)],

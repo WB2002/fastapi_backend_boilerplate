@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from app.auth.auth_service import AuthService
@@ -26,13 +27,23 @@ from app.core.feature_flag.repository import FeatureFlagRepository
 _ROUTE_VALIDATION = BaseModel
 
 router = APIRouter(tags=["FeatureFlags"])
+_logger = logging.getLogger("FeatureFlagController")
 
 
 async def require_feature_flag_admin(
     user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> AuthenticatedUser:
-    return await assert_feature_flag_admin(user, auth_service=auth_service)
+    try:
+        return await assert_feature_flag_admin(user, auth_service=auth_service)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _logger.warning("Feature-flag admin authorization failed: %s", exc)
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient feature-flag permissions",
+        ) from exc
 
 
 def get_feature_flag_manager(
