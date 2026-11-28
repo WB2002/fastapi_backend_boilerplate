@@ -16,7 +16,7 @@ if [ "$status" -eq 0 ]; then
   exit 0
 fi
 
-if echo "$output" | grep -Eq 'HTTPError|ServiceError|ConnectionError|Forbidden|NameResolutionError'; then
+if echo "$output" | grep -Eq 'HTTPError|ServiceError|ConnectionError|Forbidden|NameResolutionError|ReadTimeout|ReadTimeoutError|TimeoutError'; then
   echo "notice: pip-audit remote advisory database unreachable (offline/sandboxed environment); skipping live check"
   echo "pip-audit: SKIPPED (offline)"
   exit 0

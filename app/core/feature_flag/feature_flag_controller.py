@@ -7,9 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from app.auth.access_token_authenticator import UnauthorizedException
-from app.auth.auth_service import AuthService
 from app.auth.types import AuthenticatedUser
-from app.common.decorators import skip_country_access
+from app.common.decorators import (
+    skip_country_access,
+    skip_inbound_bulkhead,
+    skip_rate_limit,
+)
 from app.core.feature_flag.audit_service import FeatureFlagAuditService
 from app.core.feature_flag.dto import (
     CreateFeatureFlagDto,
@@ -20,7 +23,7 @@ from app.core.feature_flag.evaluator import feature_flag_to_dict
 from app.core.feature_flag.feature_flag_manager import FeatureFlagManager
 from app.core.feature_flag.feature_flag_permissions import (
     assert_feature_flag_admin,
-    get_auth_service,
+    resolve_auth_service,
 )
 from app.core.feature_flag.feature_flag_service import FeatureFlagService
 from app.core.feature_flag.repository import FeatureFlagRepository
@@ -31,13 +34,11 @@ router = APIRouter(tags=["FeatureFlags"])
 _logger = logging.getLogger("FeatureFlagController")
 
 
-async def require_feature_flag_admin(
-    request: Request,
-    auth_service: Annotated[AuthService, Depends(get_auth_service)],
-) -> AuthenticatedUser:
+async def require_feature_flag_admin(request: Request) -> AuthenticatedUser:
     user = getattr(request.state, "user", None)
     if not isinstance(user, AuthenticatedUser):
         raise UnauthorizedException("Unauthorized")
+    auth_service = resolve_auth_service(request)
     try:
         return await assert_feature_flag_admin(user, auth_service=auth_service)
     except HTTPException:
@@ -61,6 +62,8 @@ def build_feature_flag_manager(request: Request) -> FeatureFlagManager:
 
 @router.get("/feature-flags")
 @skip_country_access
+@skip_rate_limit
+@skip_inbound_bulkhead
 async def list_flags(
     request: Request,
     _admin: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],

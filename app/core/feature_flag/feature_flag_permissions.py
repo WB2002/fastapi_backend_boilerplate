@@ -11,20 +11,28 @@ from app.auth.types import AuthenticatedUser
 logger = logging.getLogger("FeatureFlagPermissions")
 
 
-def get_auth_service(request: Request) -> AuthService:
+def resolve_auth_service(request: Request) -> AuthService | None:
     auth = getattr(request.app.state, "auth_service", None)
-    if not isinstance(auth, AuthService):
-        raise HTTPException(status_code=503, detail="Auth service unavailable")
-    return auth
+    if isinstance(auth, AuthService):
+        return auth
+    return None
 
 
 async def assert_feature_flag_admin(
     user: AuthenticatedUser,
     *,
-    auth_service: AuthService,
+    auth_service: AuthService | None = None,
 ) -> AuthenticatedUser:
-    if auth_service.is_admin_email(user.email):
-        return user
+    if auth_service is not None:
+        try:
+            if auth_service.is_admin_email(user.email):
+                return user
+        except Exception:
+            logger.warning(
+                "Feature-flag allowlist check failed for %s",
+                user.email,
+                exc_info=True,
+            )
 
     jwt_role = str(user.role).lower()
     if jwt_role != UserRole.ADMIN.value:
@@ -33,12 +41,20 @@ async def assert_feature_flag_admin(
             detail="Insufficient feature-flag permissions",
         )
 
-    db_user = None
+    if auth_service is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient feature-flag permissions",
+        )
+
     try:
         db_user = await auth_service.user_repository.find_by_id(user.id)
     except Exception:
         logger.warning("Feature-flag admin DB lookup failed for user %s", user.id)
-        db_user = None
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient feature-flag permissions",
+        ) from None
 
     if db_user is None:
         raise HTTPException(
@@ -59,4 +75,4 @@ async def assert_feature_flag_admin(
     return user
 
 
-__all__ = ["assert_feature_flag_admin", "get_auth_service"]
+__all__ = ["assert_feature_flag_admin", "resolve_auth_service"]
