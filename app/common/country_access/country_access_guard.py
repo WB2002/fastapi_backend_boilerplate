@@ -11,6 +11,7 @@ from app.common.country_access.country_access_service import (
 )
 from app.common.country_access.trust_proxy import resolve_client_ip_from_request
 from app.common.country_access.types import GeoLocationService
+from app.common.decorators import should_skip_country_access
 from app.core.telemetry.emf_metrics import CountryAccessTelemetry
 
 SKIP_COUNTRY_ACCESS_ATTR = "_skip_country_access"
@@ -41,7 +42,11 @@ class CountryAccessGuard:
 
         # Check endpoint exemption
         endpoint = request.scope.get("endpoint")
-        if endpoint and getattr(endpoint, SKIP_COUNTRY_ACCESS_ATTR, False):
+        route = request.scope.get("route")
+        if endpoint and (
+            getattr(endpoint, SKIP_COUNTRY_ACCESS_ATTR, False)
+            or should_skip_country_access(endpoint, route)
+        ):
             return
 
         if not self._service.is_active():

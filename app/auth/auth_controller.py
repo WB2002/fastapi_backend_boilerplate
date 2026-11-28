@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Request, Response
 from pydantic import ValidationError
 
 from app.auth.access_token_authenticator import UnauthorizedException
 from app.auth.auth_service import AuthService
 from app.auth.constants import DEFAULT_ACCESS_TOKEN_TTL, DEFAULT_SESSION_TTL
 from app.auth.dto import LoginDto, RegisterDto
-from app.auth.guards.jwt_auth_guard import JwtAuthGuard, get_current_user
+from app.auth.guards.jwt_auth_guard import JwtAuthGuard
 from app.auth.types import AuthenticatedUser, AuthResponsePayload
 from app.common.config.parsers import ApiPriorityLevel, parse_positive_int
 from app.common.constants import (
@@ -383,11 +383,11 @@ def create_auth_router(
     @skip_country_access
     @skip_inbound_bulkhead
     @skip_tracing
-    async def auth_me(
-        request: Request,
-        user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-    ) -> dict[str, str]:
+    async def auth_me(request: Request) -> dict[str, str]:
         ctrl = _resolve_controller(request)
+        user = getattr(request.state, "user", None)
+        if not isinstance(user, AuthenticatedUser):
+            raise UnauthorizedException("Unauthorized")
         return ctrl.get_me(user)
 
     @router.post("/auth/logout", status_code=200)
