@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.auth.access_token_authenticator import UnauthorizedException
 from app.auth.auth_service import AuthService
 from app.auth.types import AuthenticatedUser
+from app.common.decorators import skip_country_access
 from app.core.feature_flag.audit_service import FeatureFlagAuditService
 from app.core.feature_flag.dto import (
     CreateFeatureFlagDto,
@@ -59,6 +60,7 @@ def build_feature_flag_manager(request: Request) -> FeatureFlagManager:
 
 
 @router.get("/feature-flags")
+@skip_country_access
 async def list_flags(
     request: Request,
     _admin: Annotated[AuthenticatedUser, Depends(require_feature_flag_admin)],

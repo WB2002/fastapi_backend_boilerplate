@@ -23,6 +23,16 @@ async def assert_feature_flag_admin(
     *,
     auth_service: AuthService,
 ) -> AuthenticatedUser:
+    if auth_service.is_admin_email(user.email):
+        return user
+
+    jwt_role = str(user.role).lower()
+    if jwt_role != UserRole.ADMIN.value:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient feature-flag permissions",
+        )
+
     db_user = None
     try:
         db_user = await auth_service.user_repository.find_by_id(user.id)
@@ -34,16 +44,12 @@ async def assert_feature_flag_admin(
             is_admin = raw_role == UserRole.ADMIN
         else:
             is_admin = str(raw_role).lower() == UserRole.ADMIN.value
-    else:
-        is_admin = str(user.role).lower() == UserRole.ADMIN.value
-
-    if is_admin or auth_service.is_admin_email(user.email):
-        return user
-
-    raise HTTPException(
-        status_code=403,
-        detail="Insufficient feature-flag permissions",
-    )
+        if not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="Insufficient feature-flag permissions",
+            )
+    return user
 
 
 __all__ = ["assert_feature_flag_admin", "get_auth_service"]
